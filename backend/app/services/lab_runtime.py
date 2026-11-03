@@ -60,6 +60,9 @@ def guarded_start(fn):
     def wrapped(*args, **kwargs):
         from .simulation_runner import SimulationRunner, RunnerStatus
         data = request.get_json(silent=True) or {}
+        for key in ('force', 'retry', 'enable_graph_memory_update'):
+            if key in data and type(data[key]) is not bool:
+                return jsonify(success=False, error=f'{key} must be a JSON boolean'), 400
         sid = data.get('simulation_id', '')
         if not isinstance(sid, str) or not re.fullmatch(r'sim_[A-Za-z0-9_-]{4,64}', sid):
             return jsonify(success=False, error='Invalid simulation ID'), 400
