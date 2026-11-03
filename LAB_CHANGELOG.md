@@ -79,3 +79,24 @@ run reads. Original histories remain intact; graph memory stays off for this run
   (1,024 tokens). The installed Camel version otherwise uses max_tokens for both,
   which rejected dossier-grounded personas before any model call. Both social
   workers and restored interviews share this model adapter.
+
+- Existing projects now have a research workspace: append PDF/Markdown/text to the
+  same Zep graph, retain original files and cumulative revision snapshots, show
+  durable update history, deduplicate uploads and reconcile recorded batches without
+  blindly replaying mutations. Incomplete/ambiguous updates remain visibly blocked.
+- New scenarios reuse a project's graph with their own objective, source checksum,
+  revision and text snapshot. Previously saved results remain intact. Preparing or
+  generating a new report against a changed revision requires a new scenario rather
+  than silently using newer knowledge. Historical agent interviews remain available.
+- Graph updates serialize with active runs, preparation, reports and reset/delete.
+  Agent preparation is explicit, bounded to a displayed 1–50-agent maximum, and
+  visiting preparation no longer stops a run. Starts remain explicit.
+- Completed the 16-role, eight-round English workshop (128 generated contributions).
+  Its report received an explicit editorial evidence review: preserve the original
+  draft, distinguish hypothetical constraints from facts, correct ARR arithmetic and
+  disclose shared-model/fixed-order unanimity. Generated reports still require review.
+
+Blast radius: checked uploads, duplicate submissions, interrupted batch recovery,
+Zep graph lifecycle consumers, project text/files, scenario creation and objective,
+preparation, run start, report generation/chat, archived revisions and mobile routing.
+No production services or customer research are committed to this repository.

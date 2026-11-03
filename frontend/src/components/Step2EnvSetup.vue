@@ -1,6 +1,11 @@
 <template>
   <div class="env-setup-panel">
     <div class="scroll-container">
+      <section v-if="needsPreparation" style="padding:16px;background:#fff;border:1px solid #ddd;margin-bottom:16px">
+        <p>Prepare personas from this project's current research. This uses paid model requests. Review the generated personas before starting rounds.</p>
+        <label>Maximum agents <input v-model.number="maxAgents" type="number" min="1" max="50" style="width:80px" /></label>
+        <button @click="beginPreparation" style="display:block;margin-top:12px;padding:12px">Prepare agents</button>
+      </section>
       <!-- Step 01: 模拟实例 -->
       <div class="step-card" :class="{ 'active': phase === 0, 'completed': phase > 0 }">
         <div class="card-header">
@@ -636,6 +641,7 @@ import { ref, computed, watch, onMounted, onUnmounted, nextTick } from 'vue'
 import { useI18n } from 'vue-i18n'
 import {
   prepareSimulation,
+  getSimulation,
   getPrepareStatus,
   getSimulationProfilesRealtime,
   getSimulationConfig,
@@ -654,6 +660,9 @@ const props = defineProps({
 const emit = defineEmits(['go-back', 'next-step', 'add-log', 'update-status'])
 
 // State
+const needsPreparation = ref(false)
+const maxAgents = ref(20)
+const beginPreparation = () => { needsPreparation.value = false; startPrepareSimulation() }
 const phase = ref(0) // 0: 初始化, 1: 生成人设, 2: 生成配置, 3: 完成
 const taskId = ref(null)
 const prepareProgress = ref(0)
@@ -794,6 +803,7 @@ const startPrepareSimulation = async () => {
     const res = await prepareSimulation({
       simulation_id: props.simulationId,
       use_llm_for_profiles: true,
+      max_agents: maxAgents.value,
       parallel_profile_count: 5
     })
     
@@ -1086,12 +1096,14 @@ watch(() => props.systemLogs?.length, () => {
   })
 })
 
-onMounted(() => {
-  // 自动开始准备流程
-  if (props.simulationId) {
-    addLog(t('log.step2Init'))
-    startPrepareSimulation()
-  }
+onMounted(async () => {
+  if (!props.simulationId) return
+  try {
+    const response = await getSimulation(props.simulationId)
+    if (response.data.config_generated) await loadPreparedData()
+    else if (response.data.status === 'preparing') { phase.value = 1; startProfilesPolling(); startConfigPolling() }
+    else needsPreparation.value = true
+  } catch (err) { addLog(err.message); needsPreparation.value = true }
 })
 
 onUnmounted(() => {

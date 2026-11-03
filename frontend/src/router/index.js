@@ -5,8 +5,10 @@ import SimulationView from '../views/SimulationView.vue'
 import SimulationRunView from '../views/SimulationRunView.vue'
 import ReportView from '../views/ReportView.vue'
 import InteractionView from '../views/InteractionView.vue'
+import KnowledgeView from '../views/KnowledgeView.vue'
 
 const routes = [
+  { path: '/project/:projectId/knowledge', name: 'Knowledge', component: KnowledgeView },
   {
     path: '/',
     name: 'Home',

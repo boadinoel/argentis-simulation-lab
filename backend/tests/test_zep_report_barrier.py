@@ -24,7 +24,7 @@ def _json_result(result):
 
 
 def test_report_generation_waits_for_zep_ingestion(monkeypatch):
-    simulation = SimpleNamespace(project_id="proj-1", graph_id="graph-1")
+    simulation = SimpleNamespace(project_id="proj_test", graph_id="graph-1")
     monkeypatch.setattr(
         report_api,
         "SimulationManager",
@@ -65,7 +65,7 @@ def test_report_generation_waits_for_zep_ingestion(monkeypatch):
 
 
 def test_active_rerun_does_not_return_a_stale_completed_report(monkeypatch):
-    simulation = SimpleNamespace(project_id="proj-1", graph_id="graph-1")
+    simulation = SimpleNamespace(project_id="proj_test", graph_id="graph-1")
     monkeypatch.setattr(
         report_api,
         "SimulationManager",
@@ -111,7 +111,7 @@ def test_active_rerun_does_not_return_a_stale_completed_report(monkeypatch):
 
 
 def test_failed_ingestion_cannot_generate_a_report_after_restart(monkeypatch):
-    simulation = SimpleNamespace(project_id="proj-1", graph_id="graph-1")
+    simulation = SimpleNamespace(project_id="proj_test", graph_id="graph-1")
     monkeypatch.setattr(
         report_api,
         "SimulationManager",
@@ -149,12 +149,12 @@ def test_failed_ingestion_cannot_generate_a_report_after_restart(monkeypatch):
 def test_report_reader_lease_blocks_graph_start_and_delete(monkeypatch):
     simulation = SimpleNamespace(
         simulation_id="sim-1",
-        project_id="proj-1",
+        project_id="proj_test",
         graph_id="graph-1",
         status=SimulationStatus.READY,
     )
     project = SimpleNamespace(
-        project_id="proj-1",
+        project_id="proj_test",
         graph_id="graph-1",
         status=ProjectStatus.GRAPH_COMPLETED,
         simulation_requirement="mock requirement",

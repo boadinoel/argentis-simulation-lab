@@ -80,6 +80,9 @@ def guarded_start(fn):
             try:
                 options = validate_options(data, run_options(root))
                 prepared_config = json.loads((root / 'simulation_config.json').read_text(encoding='utf-8'))
+                if prepared_config.get('project_id'):
+                    from .knowledge_workspace import assert_available
+                    assert_available(prepared_config['project_id'])
                 from .lab_evidence import bind_seed_posts
                 from types import SimpleNamespace
                 bind_seed_posts(prepared_config.get('event_config', {}).get('initial_posts', []),

@@ -249,7 +249,8 @@ class SimulationManager:
         defined_entity_types: Optional[List[str]] = None,
         use_llm_for_profiles: bool = True,
         progress_callback: Optional[callable] = None,
-        parallel_profile_count: int = 3
+        parallel_profile_count: int = 3,
+        max_agents: int = 20
     ) -> SimulationState:
         """
         准备模拟环境（全程自动化）
@@ -302,6 +303,10 @@ class SimulationManager:
                 enrich_with_edges=True
             )
             
+            if type(max_agents) is not int or not 1 <= max_agents <= 50:
+                raise ValueError('Maximum agents must be an integer from 1 to 50.')
+            filtered.entities = filtered.entities[:max_agents]
+            filtered.filtered_count = len(filtered.entities)
             state.entities_count = filtered.filtered_count
             state.entity_types = list(filtered.entity_types)
             

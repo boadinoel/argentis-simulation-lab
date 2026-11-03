@@ -295,7 +295,7 @@ onMounted(async () => {
   addLog(t('log.simViewInit'))
   
   // 检查并关闭正在运行的模拟（用户从 Step 3 返回时）
-  await checkAndStopRunningSimulation()
+  // Visiting preparation must never stop a saved or running simulation.
   
   // 加载模拟数据
   loadSimulationData()

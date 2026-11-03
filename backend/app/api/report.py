@@ -12,6 +12,7 @@ from . import report_bp
 from ..config import Config
 from ..services.report_agent import ReportAgent, ReportManager, ReportStatus
 from ..services.simulation_manager import SimulationManager
+from ..services.knowledge_workspace import scenario_objective
 from ..services.simulation_runner import SimulationRunner, RunnerStatus
 from ..services.zep_graph_memory_updater import ZepGraphMemoryManager
 from ..models.project import ProjectManager, ProjectStatus
@@ -145,7 +146,7 @@ def generate_report():
                 ),
             }), 409
         
-        simulation_requirement = project.simulation_requirement
+        simulation_requirement = scenario_objective(project, os.path.join(Config.OASIS_SIMULATION_DATA_DIR, simulation_id))
         if not simulation_requirement:
             return jsonify({
                 "success": False,
@@ -230,6 +231,8 @@ def generate_report():
                         }
                     })
 
+            from ..services.knowledge_workspace import verify_revision
+            verify_revision(project, os.path.join(Config.OASIS_SIMULATION_DATA_DIR, simulation_id))
             task_manager = TaskManager()
             task_id = task_manager.create_task(
                 task_type="report_generate",
@@ -658,9 +661,11 @@ def chat_with_report_agent():
                 "error": t('api.missingGraphId')
             }), 400
         
-        simulation_requirement = project.simulation_requirement or ""
+        simulation_requirement = scenario_objective(project, os.path.join(Config.OASIS_SIMULATION_DATA_DIR, simulation_id)) or ""
         
         # 创建Agent并进行对话
+        from ..services.knowledge_workspace import verify_revision
+        verify_revision(project, os.path.join(Config.OASIS_SIMULATION_DATA_DIR, simulation_id))
         agent = ReportAgent(
             graph_id=graph_id,
             simulation_id=simulation_id,

@@ -5,6 +5,7 @@
     <p v-if="error" role="alert">{{ error }}</p>
     <article v-for="project in projects" :key="project.project_id">
       <h3><router-link :to="'/process/' + project.project_id">{{ project.name }}</router-link></h3>
+      <router-link :to="'/project/' + project.project_id + '/knowledge'">Update research or create a new scenario</router-link>
       <p>{{ project.status.replaceAll('_', ' ') }} · {{ project.files?.length || 0 }} document(s)</p>
       <small>Project {{ project.project_id }} · Graph {{ project.graph_id || 'not built yet' }}</small>
       <div v-for="sim in simulations.filter(s => s.project_id === project.project_id)" :key="sim.simulation_id">

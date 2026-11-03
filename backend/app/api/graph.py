@@ -42,6 +42,10 @@ def _active_graph_consumers(graph_id: str) -> list[str]:
         f"report:{reader_id}"
         for reader_id in get_graph_readers(graph_id)
     }
+    from ..services.knowledge_workspace import busy
+    for project in ProjectManager.find_projects_by_graph_id(graph_id):
+        if re.fullmatch(r'proj_[A-Za-z0-9_-]{4,64}', project.project_id):
+            active.update('knowledge:' + u['update_id'] for u in busy(project.project_id))
     for simulation_id in ZepGraphMemoryManager.get_simulation_ids_for_graph(graph_id):
         finalization_lock = SimulationRunner._finalization_lock(simulation_id)
         if not finalization_lock.acquire(blocking=False):
@@ -67,6 +71,8 @@ def _active_graph_consumers(graph_id: str) -> list[str]:
     for simulation in SimulationManager().list_simulations():
         if simulation.graph_id != graph_id:
             continue
+        if str(getattr(getattr(simulation, 'status', None), 'value', getattr(simulation, 'status', None))) == 'preparing':
+            active.add(simulation.simulation_id)
         run_state = SimulationRunner.get_run_state(simulation.simulation_id)
         if run_state and run_state.runner_status in active_runner_statuses:
             active.add(simulation.simulation_id)

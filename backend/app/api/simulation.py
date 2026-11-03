@@ -24,6 +24,7 @@ from ..utils.locale import t, get_locale, set_locale
 from ..utils.zep_lifecycle import get_graph_readers, graph_lifecycle_lock
 from ..models.project import ProjectManager
 from ..services.lab_runtime import guarded_start, run_options
+from ..services import knowledge_workspace as knowledge
 
 logger = get_logger('mirofish.api.simulation')
 
@@ -249,6 +250,7 @@ def create_simulation():
                 "error": t('api.graphNotBuilt')
             }), 400
         
+        knowledge.assert_available(project_id)
         manager = SimulationManager()
         state = manager.create_simulation(
             project_id=project_id,
@@ -256,6 +258,7 @@ def create_simulation():
             enable_twitter=data.get('enable_twitter', True),
             enable_reddit=data.get('enable_reddit', True),
         )
+        knowledge.pin_simulation(project, manager._get_simulation_dir(state.simulation_id), data.get('simulation_requirement'))
         
         return jsonify({
             "success": True,
@@ -399,6 +402,7 @@ def _check_simulation_prepared(simulation_id: str) -> tuple:
 
 
 @simulation_bp.route('/prepare', methods=['POST'])
+@knowledge.guard_preparation
 def prepare_simulation():
     """
     准备模拟环境（异步任务，LLM智能生成所有参数）
@@ -496,7 +500,13 @@ def prepare_simulation():
             }), 404
         
         # 获取模拟需求
-        simulation_requirement = project.simulation_requirement or ""
+        import json
+        from pathlib import Path
+        sim_root = Path(manager._get_simulation_dir(simulation_id))
+        knowledge.verify_revision(project, sim_root)
+        scenario_path = sim_root / 'scenario.json'
+        scenario = json.loads(scenario_path.read_text()) if scenario_path.exists() else {}
+        simulation_requirement = scenario.get('objective') or project.simulation_requirement or ""
         if not simulation_requirement:
             return jsonify({
                 "success": False,
@@ -506,6 +516,9 @@ def prepare_simulation():
         # 获取文档文本
         document_text = ProjectManager.get_extracted_text(state.project_id) or ""
         
+        max_agents = data.get('max_agents', 20)
+        if type(max_agents) is not int or not 1 <= max_agents <= 50:
+            return jsonify(success=False, error='Maximum agents must be an integer from 1 to 50.'), 400
         entity_types_list = data.get('entity_types')
         use_llm_for_profiles = data.get('use_llm_for_profiles', True)
         parallel_profile_count = data.get('parallel_profile_count', 5)
@@ -522,7 +535,7 @@ def prepare_simulation():
                 enrich_with_edges=False  # 不获取边信息，加快速度
             )
             # 保存实体数量到状态（供前端立即获取）
-            state.entities_count = filtered_preview.filtered_count
+            state.entities_count = min(filtered_preview.filtered_count, max_agents)
             state.entity_types = list(filtered_preview.entity_types)
             logger.info(f"预期实体数量: {filtered_preview.filtered_count}, 类型: {filtered_preview.entity_types}")
         except Exception as e:
@@ -623,6 +636,7 @@ def prepare_simulation():
                     )
                 
                 result_state = manager.prepare_simulation(
+                    max_agents=max_agents,
                     simulation_id=simulation_id,
                     simulation_requirement=simulation_requirement,
                     document_text=document_text,
@@ -1705,11 +1719,12 @@ def start_simulation():
                 }), 400
 
         graph_guard = (
-            graph_lifecycle_lock(graph_id)
-            if enable_graph_memory_update
+            graph_lifecycle_lock(graph_id or state.graph_id)
+            if (graph_id or state.graph_id)
             else nullcontext()
         )
         with graph_guard:
+            knowledge.assert_available(state.project_id)
             if enable_graph_memory_update:
                 # Re-read both references under the same per-graph lock used
                 # by reset/delete. Keep the lock through updater creation in
