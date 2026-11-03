@@ -89,7 +89,7 @@ run reads. Original histories remain intact; graph memory stays off for this run
   generating a new report against a changed revision requires a new scenario rather
   than silently using newer knowledge. Historical agent interviews remain available.
 - Graph updates serialize with active runs, preparation, reports and reset/delete.
-  Agent preparation is explicit, bounded to a displayed 1–50-agent maximum, and
+  Agent preparation is explicit, bounded to a displayed 1-50-agent maximum, and
   visiting preparation no longer stops a run. Starts remain explicit.
 - Completed the 16-role, eight-round English workshop (128 generated contributions).
   Its report received an explicit editorial evidence review: preserve the original
@@ -103,3 +103,10 @@ No production services or customer research are committed to this repository.
 
 - Lifecycle race fixtures now use valid project IDs while retaining the same
   concurrent reset/start assertions; existing graph ownership checks stay strict.
+
+- Generic organizational Reddit profiles now retain every required OASIS key with
+  explicit unknown demographics; opening-post examples match the required exact
+  agent identity schema. This extends the workshop fix to newly uploaded topics.
+
+Blast radius: checked generic Reddit exports, Twitter CSV export, seed generation
+and exact identity binding. No personal demographic facts are invented.

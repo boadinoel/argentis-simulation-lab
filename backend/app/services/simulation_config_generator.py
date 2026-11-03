@@ -703,7 +703,7 @@ Write only from that entity's perspective, never impersonate a different named o
     "hot_topics": ["关键词1", "关键词2", ...],
     "narrative_direction": "<舆论发展方向描述>",
     "initial_posts": [
-        {{"content": "帖子内容", "poster_type": "实体类型（必须从可用类型中选择）"}},
+        {{"content": "Post content", "poster_type": "AvailableEntityType", "poster_agent_id": 0, "poster_name": "Exact name from the identity list"}},
         ...
     ],
     "reasoning": "<简要说明>"

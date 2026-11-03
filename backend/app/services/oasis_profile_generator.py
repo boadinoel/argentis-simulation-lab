@@ -132,15 +132,10 @@ class OasisAgentProfile:
             "created_at": self.created_at,
         }
         
-        # 添加额外人设信息（如果有）
-        if self.age:
-            profile["age"] = self.age
-        if self.gender:
-            profile["gender"] = self.gender
-        if self.mbti:
-            profile["mbti"] = self.mbti
-        if self.country:
-            profile["country"] = self.country
+        # OASIS requires these keys even for organizations with unknown demographics.
+        profile.update(age=self.age, gender=self.gender or "other",
+                       mbti=self.mbti or "unspecified",
+                       country=self.country or "unspecified")
         if self.profession:
             profile["profession"] = self.profession
         if self.interested_topics:

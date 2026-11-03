@@ -74,3 +74,13 @@ def test_normalized_profile_serializes_to_twitter_and_reddit(tmp_path):
     assert reddit["persona"] == "详细, 人设"
     assert reddit["mbti"] == "ENFP"
     assert reddit["interested_topics"] == ["AI", "政策"]
+
+
+def test_reddit_organization_keeps_required_unknown_demographics():
+    profile = OasisAgentProfile(user_id=0, user_name="library", name="Library",
+                                bio="A library", persona="A synthetic library representative")
+    exported = profile.to_reddit_format()
+    assert exported["age"] is None
+    assert exported["gender"] == "other"
+    assert exported["mbti"] == "unspecified"
+    assert exported["country"] == "unspecified"
