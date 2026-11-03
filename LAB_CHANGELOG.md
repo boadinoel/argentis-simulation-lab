@@ -66,3 +66,7 @@ barrier tests exercise the underlying upstream handler separately from the lab g
 Blast radius: checked locale propagation, generated profiles, seed identity, worker
 rounds, persisted events, report evidence, interview prompts, phone chat and prior
 run reads. Original histories remain intact; graph memory stays off for this run.
+
+- Report reader-barrier fixture targets its upstream handler directly; lab lifecycle
+  validation has separate coverage. Locale/persona/evidence and existing lifecycle
+  checks passed (50), with report/JSON checks exercised separately.

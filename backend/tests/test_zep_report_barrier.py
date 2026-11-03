@@ -279,7 +279,7 @@ def test_report_reader_lease_blocks_graph_start_and_delete(monkeypatch):
             },
         ):
             start_body, start_status = _json_result(
-                simulation_api.start_simulation()
+                simulation_api.start_simulation.__wrapped__()
             )
         assert start_status == 409
         assert start_body["active_reports"] == [report_id]
