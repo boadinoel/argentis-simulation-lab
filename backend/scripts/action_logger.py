@@ -95,7 +95,7 @@ class PlatformActionLogger:
             "timestamp": datetime.now().isoformat(),
             "event_type": "simulation_start",
             "platform": self.platform,
-            "total_rounds": config.get("time_config", {}).get("total_simulation_hours", 72) * 2,
+            "total_rounds": config.get("time_config", {}).get("total_simulation_hours", 72) * 60 // config.get("time_config", {}).get("minutes_per_round", 30),
             "agents_count": len(config.get("agent_configs", [])),
         }
         
@@ -268,7 +268,7 @@ class ActionLogger:
             "timestamp": datetime.now().isoformat(),
             "platform": platform,
             "event_type": "simulation_start",
-            "total_rounds": config.get("time_config", {}).get("total_simulation_hours", 72) * 2,
+            "total_rounds": config.get("time_config", {}).get("total_simulation_hours", 72) * 60 // config.get("time_config", {}).get("minutes_per_round", 30),
             "agents_count": len(config.get("agent_configs", [])),
         }
         

@@ -50,3 +50,19 @@ barrier tests exercise the underlying upstream handler separately from the lab g
 - Report and interview screens adapt to phones. Entering the interview screen
   reconnects its saved environment and waits for IPC readiness; it never starts
   simulation rounds or sends a model request just from navigation.
+
+- English is the backend default, including background tasks and browser regional
+  language headers. Interview instructions and persona country fields no longer
+  force Chinese. New opening posts require an exact agent ID/name match.
+- Reports read persisted actions/rounds directly and distinguish source claims,
+  scripted conditions, synthetic responses and interpretation. Graph entity counts
+  are no longer presented as active participant counts.
+- Added an explicit, bounded eight-round facilitated strategic workshop using
+  sixteen dossier-grounded stakeholder archetypes. Every round records genuine
+  OASIS model replies and publishes them for subsequent rebuttals; source evidence
+  stays private on the volume, with its checksum retained. This is a qualitative
+  exercise, not calibrated forecasting or independent randomized scenario arms.
+
+Blast radius: checked locale propagation, generated profiles, seed identity, worker
+rounds, persisted events, report evidence, interview prompts, phone chat and prior
+run reads. Original histories remain intact; graph memory stays off for this run.

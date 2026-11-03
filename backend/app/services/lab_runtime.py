@@ -79,6 +79,11 @@ def guarded_start(fn):
                 return jsonify(success=False, error='This attempt failed. Use the explicit Retry button.'), 409
             try:
                 options = validate_options(data, run_options(root))
+                prepared_config = json.loads((root / 'simulation_config.json').read_text(encoding='utf-8'))
+                from .lab_evidence import bind_seed_posts
+                from types import SimpleNamespace
+                bind_seed_posts(prepared_config.get('event_config', {}).get('initial_posts', []),
+                    [SimpleNamespace(**a) for a in prepared_config.get('agent_configs', [])])
                 for platform in ('twitter', 'reddit'):
                     if options['platform'] in (platform, 'parallel'):
                         # Upstream uses CSV for Twitter and JSON for Reddit.

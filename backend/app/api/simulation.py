@@ -53,7 +53,7 @@ def _get_default_platform(simulation_id: str) -> str:
 
 # Interview prompt 优化前缀
 # 添加此前缀可以避免Agent调用工具，直接用文本回复
-INTERVIEW_PROMPT_PREFIX = "结合你的人设、所有的过往记忆与行动，不调用任何工具直接用文本回复我："
+INTERVIEW_PROMPT_PREFIX = "Respond directly as your simulated persona, using saved actions and context. Do not call tools. Do not invent actual customers, contracts or outcomes. "
 
 
 def optimize_interview_prompt(prompt: str) -> str:
@@ -71,7 +71,8 @@ def optimize_interview_prompt(prompt: str) -> str:
     # 避免重复添加前缀
     if prompt.startswith(INTERVIEW_PROMPT_PREFIX):
         return prompt
-    return f"{INTERVIEW_PROMPT_PREFIX}{prompt}"
+    from ..utils.locale import get_language_instruction
+    return f"{INTERVIEW_PROMPT_PREFIX}{get_language_instruction()}\nQuestion: {prompt}"
 
 
 # ============== 实体读取接口 ==============

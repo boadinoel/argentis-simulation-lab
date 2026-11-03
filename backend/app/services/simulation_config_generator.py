@@ -667,6 +667,7 @@ class SimulationConfigGenerator:
             if len(type_examples[etype]) < 3:
                 type_examples[etype].append(e.name)
         
+        identity_list = json.dumps([{ "poster_agent_id": i, "poster_name": e.name } for i, e in enumerate(entities)], ensure_ascii=False)
         type_info = "\n".join([
             f"- {t}: {', '.join(examples)}" 
             for t, examples in type_examples.items()
@@ -681,7 +682,11 @@ class SimulationConfigGenerator:
 
 {context_truncated}
 
-## 可用实体类型及示例
+## Exact posting identities
+{identity_list}
+Every initial post MUST include poster_agent_id and poster_name copied from this list.
+Write only from that entity's perspective, never impersonate a different named organization.
+## Available types
 {type_info}
 
 ## 任务
@@ -740,78 +745,10 @@ class SimulationConfigGenerator:
         if not event_config.initial_posts:
             return event_config
         
-        # 按实体类型建立 agent 索引
-        agents_by_type: Dict[str, List[AgentActivityConfig]] = {}
-        for agent in agent_configs:
-            etype = agent.entity_type.lower()
-            if etype not in agents_by_type:
-                agents_by_type[etype] = []
-            agents_by_type[etype].append(agent)
-        
-        # 类型映射表（处理 LLM 可能输出的不同格式）
-        type_aliases = {
-            "official": ["official", "university", "governmentagency", "government"],
-            "university": ["university", "official"],
-            "mediaoutlet": ["mediaoutlet", "media"],
-            "student": ["student", "person"],
-            "professor": ["professor", "expert", "teacher"],
-            "alumni": ["alumni", "person"],
-            "organization": ["organization", "ngo", "company", "group"],
-            "person": ["person", "student", "alumni"],
-        }
-        
-        # 记录每种类型已使用的 agent 索引，避免重复使用同一个 agent
-        used_indices: Dict[str, int] = {}
-        
-        updated_posts = []
-        for post in event_config.initial_posts:
-            poster_type = post.get("poster_type", "").lower()
-            content = post.get("content", "")
-            
-            # 尝试找到匹配的 agent
-            matched_agent_id = None
-            
-            # 1. 直接匹配
-            if poster_type in agents_by_type:
-                agents = agents_by_type[poster_type]
-                idx = used_indices.get(poster_type, 0) % len(agents)
-                matched_agent_id = agents[idx].agent_id
-                used_indices[poster_type] = idx + 1
-            else:
-                # 2. 使用别名匹配
-                for alias_key, aliases in type_aliases.items():
-                    if poster_type in aliases or alias_key == poster_type:
-                        for alias in aliases:
-                            if alias in agents_by_type:
-                                agents = agents_by_type[alias]
-                                idx = used_indices.get(alias, 0) % len(agents)
-                                matched_agent_id = agents[idx].agent_id
-                                used_indices[alias] = idx + 1
-                                break
-                    if matched_agent_id is not None:
-                        break
-            
-            # 3. 如果仍未找到，使用影响力最高的 agent
-            if matched_agent_id is None:
-                logger.warning(f"未找到类型 '{poster_type}' 的匹配 Agent，使用影响力最高的 Agent")
-                if agent_configs:
-                    # 按影响力排序，选择影响力最高的
-                    sorted_agents = sorted(agent_configs, key=lambda a: a.influence_weight, reverse=True)
-                    matched_agent_id = sorted_agents[0].agent_id
-                else:
-                    matched_agent_id = 0
-            
-            updated_posts.append({
-                "content": content,
-                "poster_type": post.get("poster_type", "Unknown"),
-                "poster_agent_id": matched_agent_id
-            })
-            
-            logger.info(f"初始帖子分配: poster_type='{poster_type}' -> agent_id={matched_agent_id}")
-        
-        event_config.initial_posts = updated_posts
+        from .lab_evidence import bind_seed_posts
+        event_config.initial_posts = bind_seed_posts(event_config.initial_posts, agent_configs)
         return event_config
-    
+
     def _generate_agent_configs_batch(
         self,
         context: str,

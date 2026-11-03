@@ -27,9 +27,16 @@ def set_locale(locale: str):
 
 def get_locale() -> str:
     if has_request_context():
-        raw = request.headers.get('Accept-Language', 'zh')
-        return raw if raw in _translations else 'zh'
-    return getattr(_thread_local, 'locale', 'zh')
+        return resolve_locale(request.headers.get('Accept-Language', 'en'))
+    return resolve_locale(getattr(_thread_local, 'locale', 'en'))
+
+
+def resolve_locale(raw: str) -> str:
+    """Accept browser language lists and regional tags; default to English."""
+    from werkzeug.http import parse_accept_header
+    from werkzeug.datastructures import LanguageAccept
+    accepted = parse_accept_header(raw or 'en', LanguageAccept)
+    return accepted.best_match(list(_translations), default='en')
 
 
 def t(key: str, **kwargs) -> str:
@@ -65,5 +72,6 @@ def t(key: str, **kwargs) -> str:
 
 def get_language_instruction() -> str:
     locale = get_locale()
-    lang_config = _languages.get(locale, _languages.get('zh', {}))
-    return lang_config.get('llmInstruction', '请使用中文回答。')
+    lang_config = _languages.get(locale, _languages.get('en', {}))
+    instruction = lang_config.get('llmInstruction', 'Respond in English.')
+    return instruction + ' Apply this language to all generated prose, personas, posts, interviews and translated quotations. Preserve JSON keys, IDs and proper names. This overrides language examples in templates.'

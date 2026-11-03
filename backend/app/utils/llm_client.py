@@ -118,7 +118,9 @@ class LLMClient:
         response_format: Optional[Dict[str, Any]],
     ) -> Any:
         """Send one raw Chat Completions request through the compatibility layer."""
-
+        from .locale import get_language_instruction
+        messages = [dict(message) for message in messages]
+        messages.insert(0, {'role': 'system', 'content': get_language_instruction()})
         return create_chat_completion(
             self.client,
             model=self.model,

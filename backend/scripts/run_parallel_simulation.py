@@ -1257,8 +1257,12 @@ async def run_twitter_simulation(
                 action_logger.log_round_end(round_num + 1, 0)
             continue
         
-        actions = {agent: LLMAction() for _, agent in active_agents}
-        await asyncio.wait_for(result.env.step(actions), timeout=180)
+        if config.get('strategic_rounds'):
+            from strategic_workshop import run_round
+            await run_round(result.env, result.agent_graph, config, round_num, simulation_dir, 'twitter')
+        else:
+            actions = {agent: LLMAction() for _, agent in active_agents}
+            await asyncio.wait_for(result.env.step(actions), timeout=180)
         
         # 从数据库获取实际执行的动作并记录
         actual_actions, last_rowid = fetch_new_actions_from_db(
@@ -1458,8 +1462,12 @@ async def run_reddit_simulation(
                 action_logger.log_round_end(round_num + 1, 0)
             continue
         
-        actions = {agent: LLMAction() for _, agent in active_agents}
-        await asyncio.wait_for(result.env.step(actions), timeout=180)
+        if config.get('strategic_rounds'):
+            from strategic_workshop import run_round
+            await run_round(result.env, result.agent_graph, config, round_num, simulation_dir, 'reddit')
+        else:
+            actions = {agent: LLMAction() for _, agent in active_agents}
+            await asyncio.wait_for(result.env.step(actions), timeout=180)
         
         # 从数据库获取实际执行的动作并记录
         actual_actions, last_rowid = fetch_new_actions_from_db(
