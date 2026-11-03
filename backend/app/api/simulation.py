@@ -2899,3 +2899,36 @@ def get_lab_run_options(simulation_id):
         return jsonify(success=True, data=run_options(os.path.join(SimulationRunner.RUN_STATE_DIR, simulation_id)))
     except FileNotFoundError:
         return jsonify(success=False, error='Simulation not found'), 404
+
+
+@simulation_bp.route('/<simulation_id>/resume-interviews', methods=['POST'])
+def resume_saved_interviews(simulation_id):
+    import re
+    import json
+    import sys
+    import subprocess
+    from pathlib import Path
+    if not re.fullmatch(r'sim_[A-Za-z0-9_-]{4,64}', simulation_id):
+        return jsonify(success=False, error='Invalid simulation ID'), 400
+    with SimulationRunner._finalization_lock(simulation_id):
+        state = SimulationRunner.get_run_state(simulation_id)
+        if not state or state.runner_status not in (RunnerStatus.COMPLETED, RunnerStatus.STOPPED):
+            return jsonify(success=False, error='Complete or stop the simulation before restoring interviews.'), 409
+        existing = SimulationRunner._processes.get(simulation_id)
+        if existing and existing.poll() is None:
+            return jsonify(success=True, data={'status': 'alive' if SimulationRunner.check_env_alive(simulation_id) else 'starting', 'reused': True})
+        root = Path(SimulationRunner.RUN_STATE_DIR) / simulation_id
+        if not any(root.glob('*_simulation.db')):
+            return jsonify(success=False, error='No saved simulation database.'), 409
+        log = open(root / 'interview_resume.log', 'a', encoding='utf-8')
+        try:
+            (root / 'env_status.json').write_text(json.dumps({'status': 'starting'}), encoding='utf-8')
+            process = subprocess.Popen([sys.executable, '-u', str(Path(SimulationRunner.SCRIPTS_DIR) / 'resume_interviews.py'), '--simulation-dir', str(root)], cwd=root, stdout=log, stderr=subprocess.STDOUT, start_new_session=True)
+        except Exception:
+            log.close()
+            raise
+        SimulationRunner._processes[simulation_id] = process
+        SimulationRunner._stdout_files[simulation_id] = log
+        state.process_pid = process.pid
+        SimulationRunner._save_run_state(state)
+        return jsonify(success=True, data={'status': 'starting', 'process_pid': process.pid, 'reused': False})

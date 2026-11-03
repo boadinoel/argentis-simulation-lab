@@ -15,6 +15,7 @@
         {{ isStarting ? 'Starting…' : (runStatus.runner_status === 'failed' ? 'Retry (archive previous attempt)' : 'Start simulation') }}
       </button>
       <button v-if="phase === 1" class="action-btn" :disabled="isStopping" @click="handleStopSimulation">Stop simulation</button>
+      <button v-if="savedReportId" class="action-btn" :disabled="isRestoringInterviews" @click="openInterviews">{{ isRestoringInterviews ? 'Restoring interviews…' : 'Open agent interviews' }}</button>
       <button class="action-btn" @click="router.push('/')">Projects</button>
       <button v-if="!optionsReady && !isLoading" class="action-btn" @click="restoreSimulation">Reload status</button>
     </section>
@@ -336,6 +337,8 @@ const router = useRouter()
 
 // State
 const isGeneratingReport = ref(false)
+const savedReportId = ref(null)
+const isRestoringInterviews = ref(false)
 const phase = ref(0) // 0: 未开始, 1: 运行中, 2: 已完成
 const isStarting = ref(false)
 const isLoading = ref(true)
@@ -425,6 +428,24 @@ const doStartSimulation = async () => {
   }
 }
 
+const openInterviews = async () => {
+  if (isRestoringInterviews.value) return
+  isRestoringInterviews.value = true
+  try {
+    await api.post('/api/simulation/' + props.simulationId + '/resume-interviews')
+    for (let attempt = 0; attempt < 30; attempt++) {
+      const res = await api.post('/api/simulation/env-status', { simulation_id: props.simulationId })
+      if (res.data.env_alive) {
+        router.push('/interaction/' + savedReportId.value)
+        return
+      }
+      await new Promise(resolve => setTimeout(resolve, 1000))
+    }
+    throw new Error('Interview environment is not ready yet. Try again shortly; saved results are unchanged.')
+  } catch (err) { startError.value = err.message }
+  finally { isRestoringInterviews.value = false }
+}
+
 const restoreSimulation = async () => {
   stopPolling()
   isLoading.value = true
@@ -442,6 +463,8 @@ const restoreSimulation = async () => {
       : ['completed', 'stopped'].includes(status.data.runner_status) ? 2 : 0
     startError.value = status.data.error || null
     await fetchRunStatusDetail()
+    const report = await api.get('/api/report/check/' + props.simulationId)
+    savedReportId.value = report.data.interview_unlocked ? report.data.report_id : null
     optionsReady.value = true
     emit('update-status', phase.value === 1 ? 'processing' : phase.value === 2 ? 'completed' : status.data.runner_status === 'failed' ? 'error' : 'ready')
     if (phase.value === 1) { startStatusPolling(); startDetailPolling() }
@@ -677,7 +700,7 @@ const handleNextStep = async () => {
   try {
     const res = await generateReport({
       simulation_id: props.simulationId,
-      force_regenerate: true
+      force_regenerate: false
     })
     
     if (res.success && res.data) {

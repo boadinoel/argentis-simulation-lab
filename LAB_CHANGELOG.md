@@ -41,3 +41,8 @@ barrier tests exercise the underlying upstream handler separately from the lab g
 
 - Phone browser QA found clipped report controls and split-column events; mobile
   now uses full-width timeline cards and shows only the selected platforms.
+
+- Explicit Open agent interviews restores OASIS against saved databases after a
+  restart without reset, sign-up, rounds, or graph writes. Restored interview context
+  comes from saved personas, events, and transcripts; ephemeral model memory is not
+  claimed to survive. Existing reports are reused unless separately regenerated.

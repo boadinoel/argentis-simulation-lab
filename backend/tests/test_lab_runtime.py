@@ -109,3 +109,31 @@ def test_stale_interview_status_is_not_alive(lab):
     (root / 'env_status.json').write_text('{"status":"alive","reddit_available":true}')
     assert not SimulationRunner.check_env_alive(sid)
     assert SimulationRunner.get_env_status_detail(sid)['status'] == 'stopped'
+
+
+def test_restore_interviews_is_explicit_idempotent_and_preserves_events(lab, monkeypatch):
+    from types import SimpleNamespace
+    from app.api import simulation as api
+    import subprocess
+    app, sid, root, _ = lab
+    (root / 'reddit_simulation.db').write_bytes(b'persisted database')
+    (root / 'simulation.log').write_text('original events')
+    SimulationRunner._save_run_state(SimulationRunState(simulation_id=sid, runner_status=RunnerStatus.COMPLETED, current_round=2))
+    calls = []
+    monkeypatch.setattr(SimulationRunner, '_processes', {})
+    monkeypatch.setattr(SimulationRunner, '_stdout_files', {})
+    def launch(*args, **kwargs):
+        calls.append(args)
+        return SimpleNamespace(pid=4321, poll=lambda: None)
+    monkeypatch.setattr(subprocess, 'Popen', launch)
+    try:
+        for _ in range(2):
+            with app.test_request_context(method='POST'):
+                assert api.resume_saved_interviews(sid).get_json()['success']
+        assert len(calls) == 1
+        assert SimulationRunner.get_run_state(sid).current_round == 2
+        assert (root / 'reddit_simulation.db').read_bytes() == b'persisted database'
+        assert (root / 'simulation.log').read_text() == 'original events'
+    finally:
+        for handle in SimulationRunner._stdout_files.values():
+            handle.close()
