@@ -74,3 +74,8 @@ run reads. Original histories remain intact; graph memory stays off for this run
 - Organizational workshop profiles supply required OASIS demographic fields as
   unspecified values; failed-worker messages are English while full diagnostics
   remain in the preserved log.
+
+- Separated Camel memory capacity (32,768 tokens) from the provider reply cap
+  (1,024 tokens). The installed Camel version otherwise uses max_tokens for both,
+  which rejected dossier-grounded personas before any model call. Both social
+  workers and restored interviews share this model adapter.

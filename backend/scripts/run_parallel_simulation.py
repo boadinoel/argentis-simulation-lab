@@ -1031,8 +1031,8 @@ def create_model(config: Dict[str, Any], use_boost: bool = False):
     
     print(f"{config_label} model={llm_model}, base_url={llm_base_url[:40] if llm_base_url else '默认'}...")
     
-    return ModelFactory.create(
-        model_platform=ModelPlatformType.OPENAI,
+    from lab_model import LabOpenAIModel
+    return LabOpenAIModel(
         model_type=llm_model,
         api_key=llm_api_key or None,
         url=llm_base_url or None,
