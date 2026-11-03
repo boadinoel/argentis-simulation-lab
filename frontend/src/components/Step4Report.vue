@@ -5152,11 +5152,23 @@ watch(() => props.reportId, (newId) => {
 .log-msg.error { color: #EF5350; }
 .log-msg.warning { color: #FFA726; }
 .log-msg.success { color: #66BB6A; }
+@media (max-width: 800px) {
+  .main-split-layout { display: block; overflow-y: auto; min-height: 0; }
+  .left-panel.report-style, .right-panel { width: 100%; max-width: none; height: auto; overflow: visible; box-sizing: border-box; }
+  .report-content-wrapper { padding: 16px; }
+  .main-title { font-size: 26px; }
+}
 </style>
 
 <style>
 /* English locale: smaller report title */
 html[lang="en"] .report-header-block .main-title {
   font-size: 28px;
+}
+@media (max-width: 800px) {
+  .main-split-layout { display: block; overflow-y: auto; min-height: 0; }
+  .left-panel.report-style, .right-panel { width: 100%; max-width: none; height: auto; overflow: visible; box-sizing: border-box; }
+  .report-content-wrapper { padding: 16px; }
+  .main-title { font-size: 26px; }
 }
 </style>

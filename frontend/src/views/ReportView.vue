@@ -350,4 +350,11 @@ onMounted(() => {
 .panel-wrapper.left {
   border-right: 1px solid #EAEAEA;
 }
+
+@media (max-width: 800px) {
+  .app-header { flex-wrap: wrap; height: auto !important; min-height: 96px; padding: 8px !important; }
+  .header-center { position: static !important; transform: none !important; order: 3; width: 100%; }
+  .header-right { font-size: 11px; }
+  .brand { font-size: 14px !important; }
+}
 </style>

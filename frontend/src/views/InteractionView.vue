@@ -51,7 +51,8 @@
 
       <!-- Right Panel: Step5 深度互动 -->
       <div class="panel-wrapper right" :style="rightPanelStyle">
-        <Step5Interaction
+        <p v-if="!interviewReady" style="padding:24px">{{ interviewResumeError || 'Restoring saved interview environment…' }} <button v-if="interviewResumeError" @click="loadReportData">Retry connection</button></p>
+        <Step5Interaction v-if="interviewReady"
           :reportId="currentReportId"
           :simulationId="simulationId"
           :systemLogs="systemLogs"
@@ -73,6 +74,7 @@ import { getProject, getGraphData } from '../api/graph'
 import { getSimulation } from '../api/simulation'
 import { getReport } from '../api/report'
 import LanguageSwitcher from '../components/LanguageSwitcher.vue'
+import api from '../api/index'
 
 const route = useRoute()
 const router = useRouter()
@@ -89,6 +91,8 @@ const viewMode = ref('workbench')
 // Data State
 const currentReportId = ref(route.params.reportId)
 const simulationId = ref(null)
+const interviewReady = ref(false)
+const interviewResumeError = ref('')
 const projectData = ref(null)
 const graphData = ref(null)
 const graphLoading = ref(false)
@@ -154,6 +158,14 @@ const loadReportData = async () => {
       simulationId.value = reportData.simulation_id
 
       if (simulationId.value) {
+        interviewResumeError.value = ''
+        await api.post('/api/simulation/' + simulationId.value + '/resume-interviews')
+        for (let attempt = 0; attempt < 30; attempt++) {
+          const status = await api.post('/api/simulation/env-status', { simulation_id: simulationId.value })
+          if (status.data.env_alive) { interviewReady.value = true; break }
+          await new Promise(resolve => setTimeout(resolve, 1000))
+        }
+        if (!interviewReady.value) throw new Error('Saved interview environment is not ready yet. Retry connection.')
         // 获取 simulation 信息
         const simRes = await getSimulation(simulationId.value)
         if (simRes.success && simRes.data) {
@@ -178,6 +190,7 @@ const loadReportData = async () => {
       addLog(t('log.getReportInfoFailed', { error: reportRes.error || t('common.unknownError') }))
     }
   } catch (err) {
+    interviewResumeError.value = err.message
     addLog(t('log.loadException', { error: err.message }))
   }
 }
@@ -351,5 +364,12 @@ onMounted(() => {
 
 .panel-wrapper.left {
   border-right: 1px solid #EAEAEA;
+}
+
+@media (max-width: 800px) {
+  .app-header { flex-wrap: wrap; height: auto !important; min-height: 96px; padding: 8px !important; }
+  .header-center { position: static !important; transform: none !important; order: 3; width: 100%; }
+  .header-right { font-size: 11px; }
+  .brand { font-size: 14px !important; }
 }
 </style>

@@ -46,3 +46,7 @@ barrier tests exercise the underlying upstream handler separately from the lab g
   restart without reset, sign-up, rounds, or graph writes. Restored interview context
   comes from saved personas, events, and transcripts; ephemeral model memory is not
   claimed to survive. Existing reports are reused unless separately regenerated.
+
+- Report and interview screens adapt to phones. Entering the interview screen
+  reconnects its saved environment and waits for IPC readiness; it never starts
+  simulation rounds or sends a model request just from navigation.

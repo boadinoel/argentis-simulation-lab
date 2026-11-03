@@ -2574,11 +2574,21 @@ watch(() => props.simulationId, (newId) => {
   border-top: 1px solid #E5E7EB;
   margin: 24px 0;
 }
+@media (max-width: 800px) {
+  .left-panel.report-style { display: none; }
+  .right-panel { width: 100%; min-width: 0; flex: 1; }
+  .chat-tabs { flex-wrap: wrap; }
+}
 </style>
 
 <style>
 /* English locale: smaller report title */
 html[lang="en"] .report-header-block .main-title {
   font-size: 28px;
+}
+@media (max-width: 800px) {
+  .left-panel.report-style { display: none; }
+  .right-panel { width: 100%; min-width: 0; flex: 1; }
+  .chat-tabs { flex-wrap: wrap; }
 }
 </style>
