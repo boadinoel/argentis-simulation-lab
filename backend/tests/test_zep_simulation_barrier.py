@@ -199,7 +199,7 @@ def test_simulation_start_rejects_string_booleans(field):
         method="POST",
         json={"simulation_id": "sim-1", field: "false"},
     ):
-        response, status = simulation_api.start_simulation()
+        response, status = simulation_api.start_simulation.__wrapped__()
 
     assert status == 400
     assert "JSON boolean" in response.get_json()["error"]
@@ -263,7 +263,7 @@ def test_force_restart_does_not_continue_while_old_ingestion_is_pending(monkeypa
         method="POST",
         json={"simulation_id": "sim-1", "force": True},
     ):
-        response, status = simulation_api.start_simulation()
+        response, status = simulation_api.start_simulation.__wrapped__()
 
     assert status == 409
     assert response.get_json()["pending"] is True
@@ -285,7 +285,7 @@ def test_monitor_start_failure_terminates_the_spawned_process(monkeypatch, tmp_p
         }),
         encoding="utf-8",
     )
-    (scripts_dir / "run_twitter_simulation.py").write_text("pass\n", encoding="utf-8")
+    (scripts_dir / "run_parallel_simulation.py").write_text("pass\n", encoding="utf-8")
 
     class Process:
         pid = 123

@@ -22,3 +22,7 @@ No Argentis production services or original graph/documents are changed.
 
 Upstream: https://github.com/666ghj/MiroFish, AGPL-3.0 (LICENSE retained).
 Fork source: https://github.com/boadinoel/argentis-simulation-lab
+
+Validation: lifecycle tests cover concurrent starts, terminal reconnect, interrupted
+workers, retry evidence archives, strict options, and parallel completion. Existing
+barrier tests exercise the underlying upstream handler separately from the lab guard.
