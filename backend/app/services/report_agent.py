@@ -23,6 +23,7 @@ from .lab_evidence import EVIDENCE_RULES, observed_context
 from ..utils.llm_client import LLMClient
 from ..utils.logger import get_logger
 from ..utils.locale import get_language_instruction, t
+from ..utils.report_language import ensure_report_language
 from .zep_tools import (
     ZepToolsService, 
     SearchResult, 
@@ -1568,6 +1569,7 @@ class ReportAgent:
                     section_index=section_num
                 )
                 
+                section_content = ensure_report_language(section_content, self.llm)
                 section.content = section_content
                 generated_sections.append(f"## {section.title}\n\n{section_content}")
 

@@ -117,3 +117,12 @@ and exact identity binding. No personal demographic facts are invented.
 
 Blast radius: report load/reload, generation completion, sections API and historical
 logs checked. Logs remain preserved; persisted reviewed content is authoritative.
+
+- Acquisition-workshop follow-up exposed a separate report interview path with a
+  Chinese-only prefix. Both interview entry points now share the same locale and
+  evidence instructions. English report sections receive one bounded translation
+  attempt if Chinese prose leaks through; unsuccessful repair fails visibly.
+  Translated passages are labelled and original generation logs remain preserved.
+
+Blast radius: interactive/batch/report interviews, section persistence, completion
+and explicit Chinese locale checked. No production services or original research changed.
