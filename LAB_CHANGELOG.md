@@ -26,3 +26,7 @@ Fork source: https://github.com/boadinoel/argentis-simulation-lab
 Validation: lifecycle tests cover concurrent starts, terminal reconnect, interrupted
 workers, retry evidence archives, strict options, and parallel completion. Existing
 barrier tests exercise the underlying upstream handler separately from the lab guard.
+
+- Project workspace lists projects even before a simulation is prepared, with direct
+  links to saved runs, reports, and interviews. Mobile opens the run workbench.
+- Pin the upstream runtime image digest used during validation.

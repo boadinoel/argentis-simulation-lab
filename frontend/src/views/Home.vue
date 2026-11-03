@@ -211,6 +211,7 @@
       </section>
 
       <!-- 历史项目数据库 -->
+      <ProjectWorkspace />
       <HistoryDatabase />
       <p style="padding:24px">Argentis Simulation Lab · Based on MiroFish (AGPL-3.0). <a href="https://github.com/boadinoel/argentis-simulation-lab" target="_blank" rel="noopener">Source code and license</a></p>
     </div>
@@ -221,6 +222,7 @@
 import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import HistoryDatabase from '../components/HistoryDatabase.vue'
+import ProjectWorkspace from '../components/ProjectWorkspace.vue'
 import LanguageSwitcher from '../components/LanguageSwitcher.vue'
 
 const router = useRouter()

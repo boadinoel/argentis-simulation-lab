@@ -7,7 +7,7 @@ COPY frontend ./frontend
 COPY locales ./locales
 RUN cd frontend && npm run build
 
-FROM ghcr.io/666ghj/mirofish:latest
+FROM ghcr.io/666ghj/mirofish@sha256:d236402eb35c5abfd68da63be9d19202d619da8803e173e8e34b97731180944a
 WORKDIR /app
 COPY backend/pyproject.toml backend/uv.lock ./backend/
 RUN cd backend && uv sync --frozen && uv pip install gunicorn==23.0.0

@@ -89,7 +89,7 @@ const props = defineProps({
 })
 
 // Layout State
-const viewMode = ref('split')
+const viewMode = ref(window.innerWidth < 800 ? 'workbench' : 'split')
 
 // Data State
 const currentSimulationId = ref(route.params.simulationId)
@@ -283,6 +283,7 @@ onUnmounted(() => {
 </script>
 
 <style scoped>
+@media (max-width: 800px) { .app-header { flex-wrap: wrap; height: auto !important; min-height: 96px; padding: 8px !important; } .header-center { position: static !important; transform: none !important; order: 3; width: 100%; } .header-right { font-size: 11px; } .brand { font-size: 14px !important; } }
 .main-view {
   height: 100vh;
   display: flex;
