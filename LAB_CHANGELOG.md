@@ -30,3 +30,7 @@ barrier tests exercise the underlying upstream handler separately from the lab g
 - Project workspace lists projects even before a simulation is prepared, with direct
   links to saved runs, reports, and interviews. Mobile opens the run workbench.
 - Pin the upstream runtime image digest used during validation.
+
+- Preparation checks require only enabled-platform profiles, preventing unnecessary
+  regeneration and allowing single-platform retries. Simulation creation rejects a
+  graph ID belonging to a different project.

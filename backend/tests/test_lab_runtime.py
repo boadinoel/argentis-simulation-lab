@@ -82,3 +82,23 @@ def test_parallel_completion_waits_for_other_platform(lab):
     (root / 'reddit' / 'actions.jsonl').write_text('')
     state = SimulationRunState(simulation_id=sid, reddit_completed=True, twitter_running=True)
     assert not SimulationRunner._check_all_platforms_completed(state)
+
+
+def test_single_platform_is_already_prepared(lab, monkeypatch):
+    from app.api import simulation as api
+    _, sid, root, _ = lab
+    monkeypatch.setattr(api.Config, 'OASIS_SIMULATION_DATA_DIR', str(root.parent))
+    (root / 'state.json').write_text(json.dumps({'enable_reddit': True, 'enable_twitter': False, 'status': 'failed', 'config_generated': True}))
+    prepared, _ = api._check_simulation_prepared(sid)
+    assert prepared
+
+
+def test_foreign_graph_is_rejected(monkeypatch):
+    from types import SimpleNamespace
+    from app.api import simulation as api
+    monkeypatch.setattr(api.ProjectManager, 'get_project', lambda _: SimpleNamespace(graph_id='graph_owned'))
+    app = Flask(__name__)
+    with app.test_request_context(json={'project_id': 'proj_test', 'graph_id': 'graph_unrelated'}):
+        response, status = api.create_simulation()
+        assert status == 400
+        assert 'selected project' in response.get_json()['error']

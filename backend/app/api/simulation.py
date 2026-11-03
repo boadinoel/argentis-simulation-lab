@@ -239,7 +239,9 @@ def create_simulation():
                 "error": t('api.projectNotFound', id=project_id)
             }), 404
         
-        graph_id = data.get('graph_id') or project.graph_id
+        if data.get('graph_id') and data['graph_id'] != project.graph_id:
+            return jsonify(success=False, error='The graph must belong to the selected project.'), 400
+        graph_id = project.graph_id
         if not graph_id:
             return jsonify({
                 "success": False,
@@ -294,12 +296,20 @@ def _check_simulation_prepared(simulation_id: str) -> tuple:
         return False, {"reason": "模拟目录不存在"}
     
     # 必要文件列表（不包括脚本，脚本位于 backend/scripts/）
-    required_files = [
-        "state.json",
-        "simulation_config.json",
-        "reddit_profiles.json",
-        "twitter_profiles.csv"
-    ]
+    import json
+    state_path = os.path.join(simulation_dir, "state.json")
+    if not os.path.exists(state_path):
+        return False, {"reason": "Missing simulation metadata"}
+    try:
+        with open(state_path, encoding="utf-8") as source:
+            enabled = json.load(source)
+    except (OSError, ValueError):
+        return False, {"reason": "Invalid simulation metadata"}
+    required_files = ["state.json", "simulation_config.json"]
+    if enabled.get("enable_reddit", True):
+        required_files.append("reddit_profiles.json")
+    if enabled.get("enable_twitter", True):
+        required_files.append("twitter_profiles.csv")
     
     # 检查文件是否存在
     existing_files = []
