@@ -68,7 +68,7 @@ def prepare(project_id, marker_name):
     profiles, agents = [], []
     for i, (role, incentive) in enumerate(ROLES):
         persona = ('You are the synthetic '+role+' in a private strategic workshop. You are not a real person or authorized representative of any named company. Speak exclusively English. '+incentive+'\nDo not claim personal experience, signed contracts or verified results absent explicit source evidence. Distinguish claims from assumptions. You may disagree and revise your position.\nDossier evidence brief:\n'+brief)
-        profiles.append({'user_id':i,'username':f'role_{i:02d}','name':role,'bio':incentive,'persona':persona,'karma':1000,'profession':role,'country':'United States'})
+        profiles.append({'user_id':i,'username':f'role_{i:02d}','name':role,'bio':incentive,'persona':persona,'karma':1000,'profession':role,'country':'United States','mbti':'unspecified','gender':'other','age':None})
         agents.append({'agent_id':i,'entity_uuid':f'synthetic_role_{i}','entity_name':role,'entity_type':'Stakeholder','activity_level':1.0,'active_hours':list(range(24)),'influence_weight':1.0,'stance':'neutral'})
     config = {'simulation_id':sid,'project_id':project_id,'graph_id':project['graph_id'],
         'simulation_requirement':project['simulation_requirement'], 'language':'en',

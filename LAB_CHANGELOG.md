@@ -70,3 +70,7 @@ run reads. Original histories remain intact; graph memory stays off for this run
 - Report reader-barrier fixture targets its upstream handler directly; lab lifecycle
   validation has separate coverage. Locale/persona/evidence and existing lifecycle
   checks passed (50), with report/JSON checks exercised separately.
+
+- Organizational workshop profiles supply required OASIS demographic fields as
+  unspecified values; failed-worker messages are English while full diagnostics
+  remain in the preserved log.

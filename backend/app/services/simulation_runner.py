@@ -727,7 +727,7 @@ class SimulationRunner:
                         except Exception:
                             pass
                         error_message = (
-                            f"进程退出码: {exit_code}, 错误: {error_info}"
+                            f"Worker exited with code {exit_code}. See the preserved simulation.log for details."
                         )
 
                     state.twitter_running = False
