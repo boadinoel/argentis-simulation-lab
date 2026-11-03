@@ -110,3 +110,10 @@ No production services or customer research are committed to this repository.
 
 Blast radius: checked generic Reddit exports, Twitter CSV export, seed generation
 and exact identity binding. No personal demographic facts are invented.
+
+- Completed report screens load the saved report and section files instead of
+  replaying obsolete draft content from generation logs. Phone checks compare
+  the displayed title and all sections with the canonical reviewed report.
+
+Blast radius: report load/reload, generation completion, sections API and historical
+logs checked. Logs remain preserved; persisted reviewed content is authoritative.

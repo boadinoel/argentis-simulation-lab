@@ -393,7 +393,7 @@
 import { ref, computed, watch, onMounted, onUnmounted, nextTick, h, reactive } from 'vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
-import { getAgentLog, getConsoleLog } from '../api/report'
+import { getAgentLog, getConsoleLog, getReport, getReportSections } from '../api/report'
 
 const router = useRouter()
 const { t } = useI18n()
@@ -2021,10 +2021,28 @@ const getLogLevelClass = (log) => {
 let agentLogTimer = null
 let consoleLogTimer = null
 
+const loadCompletedReport = async () => {
+  const reportId = props.reportId
+  const saved = await getReport(reportId)
+  if (!saved.success || saved.data?.status !== 'completed' || !saved.data.outline) return false
+  const sections = await getReportSections(reportId)
+  if (!sections.success || props.reportId !== reportId) return false
+  reportOutline.value = saved.data.outline
+  generatedSections.value = Object.fromEntries(
+    sections.data.sections.map(section => [section.section_index, section.content])
+  )
+  isComplete.value = true
+  currentSectionIndex.value = null
+  emit('update-status', 'completed')
+  stopPolling()
+  return true
+}
+
 const fetchAgentLog = async () => {
   if (!props.reportId) return
   
   try {
+    if (await loadCompletedReport()) return
     const res = await getAgentLog(props.reportId, agentLogLine.value)
     
     if (res.success && res.data) {
@@ -2066,6 +2084,7 @@ const fetchAgentLog = async () => {
         })
         
         agentLogLine.value = res.data.from_line + newLogs.length
+        if (isComplete.value) await loadCompletedReport()
         
         nextTick(() => {
           if (rightPanel.value) {
