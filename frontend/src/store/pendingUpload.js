@@ -6,11 +6,13 @@ import { reactive } from 'vue'
 
 const state = reactive({
   files: [],
+  projectName: '',
   simulationRequirement: '',
   isPending: false
 })
 
-export function setPendingUpload(files, requirement) {
+export function setPendingUpload(files, requirement, projectName = '') {
+  state.projectName = projectName
   state.files = files
   state.simulationRequirement = requirement
   state.isPending = true
@@ -19,12 +21,14 @@ export function setPendingUpload(files, requirement) {
 export function getPendingUpload() {
   return {
     files: state.files,
+    projectName: state.projectName,
     simulationRequirement: state.simulationRequirement,
     isPending: state.isPending
   }
 }
 
 export function clearPendingUpload() {
+  state.projectName = ''
   state.files = []
   state.simulationRequirement = ''
   state.isPending = false

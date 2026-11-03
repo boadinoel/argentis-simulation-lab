@@ -1,29 +1,19 @@
-FROM python:3.11
+# Upstream supplies the large OASIS/PyTorch dependency environment.
+FROM node:22-bookworm-slim AS frontend-build
+WORKDIR /build
+COPY frontend/package*.json ./frontend/
+RUN npm ci --prefix frontend
+COPY frontend ./frontend
+COPY locales ./locales
+RUN cd frontend && npm run build
 
-# 安装 Node.js （满足 >=18）及必要工具
-RUN apt-get update \
-  && apt-get install -y --no-install-recommends nodejs npm \
-  && rm -rf /var/lib/apt/lists/*
-
-# 从 uv 官方镜像复制 uv
-COPY --from=ghcr.io/astral-sh/uv:0.9.26 /uv /uvx /bin/
-
+FROM ghcr.io/666ghj/mirofish:latest
 WORKDIR /app
-
-# 先复制依赖描述文件以利用缓存
-COPY package.json package-lock.json ./
-COPY frontend/package.json frontend/package-lock.json ./frontend/
 COPY backend/pyproject.toml backend/uv.lock ./backend/
-
-# 安装依赖（Node + Python）
-RUN npm ci \
-  && npm ci --prefix frontend \
-  && cd backend && uv sync --frozen
-
-# 复制项目源码
+RUN cd backend && uv sync --frozen && uv pip install gunicorn==23.0.0
 COPY . .
-
-EXPOSE 3000 5001
-
-# 同时启动前后端（开发模式）
-CMD ["npm", "run", "dev"]
+COPY --from=frontend-build /build/frontend/dist ./frontend/dist
+ENV PYTHONUNBUFFERED=1 FLASK_DEBUG=false
+EXPOSE 3000
+WORKDIR /app/backend
+CMD [".venv/bin/gunicorn", "--bind", "[::]:3000", "--workers", "1", "--threads", "16", "--timeout", "0", "--graceful-timeout", "30", "lab_server:app"]

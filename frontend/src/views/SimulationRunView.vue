@@ -52,6 +52,7 @@
       <!-- Right Panel: Step3 开始模拟 -->
       <div class="panel-wrapper right" :style="rightPanelStyle">
         <Step3Simulation
+          :key="currentSimulationId"
           :simulationId="currentSimulationId"
           :maxRounds="maxRounds"
           :minutesPerRound="minutesPerRound"
@@ -99,7 +100,7 @@ const projectData = ref(null)
 const graphData = ref(null)
 const graphLoading = ref(false)
 const systemLogs = ref([])
-const currentStatus = ref('processing') // processing | completed | error
+const currentStatus = ref('ready') // processing | completed | error
 
 // --- Computed Layout Styles ---
 const leftPanelStyle = computed(() => {
@@ -122,7 +123,7 @@ const statusClass = computed(() => {
 const statusText = computed(() => {
   if (currentStatus.value === 'error') return 'Error'
   if (currentStatus.value === 'completed') return 'Completed'
-  return 'Running'
+  return currentStatus.value === 'ready' ? 'Ready' : 'Running'
 })
 
 const isSimulating = computed(() => currentStatus.value === 'processing')
@@ -149,51 +150,7 @@ const toggleMaximize = (target) => {
   }
 }
 
-const handleGoBack = async () => {
-  // 在返回 Step 2 之前，先关闭正在运行的模拟
-  addLog(t('log.preparingGoBack'))
-  
-  // 停止轮询
-  stopGraphRefresh()
-  
-  try {
-    // 先尝试优雅关闭模拟环境
-    const envStatusRes = await getEnvStatus({ simulation_id: currentSimulationId.value })
-    
-    if (envStatusRes.success && envStatusRes.data?.env_alive) {
-      addLog(t('log.closingSimEnv'))
-      try {
-        await closeSimulationEnv({ 
-          simulation_id: currentSimulationId.value,
-          timeout: 10
-        })
-        addLog(t('log.simEnvClosed'))
-      } catch (closeErr) {
-        addLog(t('log.closeSimEnvFailed'))
-        try {
-          await stopSimulation({ simulation_id: currentSimulationId.value })
-          addLog(t('log.simForceStopSuccess'))
-        } catch (stopErr) {
-          addLog(t('log.forceStopFailed', { error: stopErr.message }))
-        }
-      }
-    } else {
-      // 环境未运行，检查是否需要停止进程
-      if (isSimulating.value) {
-        addLog(t('log.stoppingSimProcess'))
-        try {
-          await stopSimulation({ simulation_id: currentSimulationId.value })
-          addLog(t('log.simStopped'))
-        } catch (err) {
-          addLog(t('log.stopSimFailed', { error: err.message }))
-        }
-      }
-    }
-  } catch (err) {
-    addLog(t('log.checkStatusFailed', { error: err.message }))
-  }
-  
-  // 返回到 Step 2 (环境搭建)
+const handleGoBack = () => {
   router.push({ name: 'Simulation', params: { simulationId: currentSimulationId.value } })
 }
 
@@ -298,6 +255,16 @@ watch(isSimulating, (newValue) => {
     stopGraphRefresh()
   }
 }, { immediate: true })
+
+watch(() => route.params.simulationId, (id) => {
+  if (!id || id === currentSimulationId.value) return
+  stopGraphRefresh()
+  currentSimulationId.value = id
+  maxRounds.value = route.query.maxRounds ? Number(route.query.maxRounds) : null
+  graphData.value = null
+  projectData.value = null
+  loadSimulationData()
+})
 
 onMounted(() => {
   addLog(t('log.simRunViewInit'))

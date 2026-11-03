@@ -1034,6 +1034,11 @@ def create_model(config: Dict[str, Any], use_boost: bool = False):
     return ModelFactory.create(
         model_platform=ModelPlatformType.OPENAI,
         model_type=llm_model,
+        api_key=llm_api_key or None,
+        url=llm_base_url or None,
+        model_config_dict={"max_tokens": 1024},
+        timeout=60,
+        max_retries=2,
     )
 
 
@@ -1203,13 +1208,15 @@ async def run_twitter_simulation(
                 pass
         
         if initial_actions:
-            await result.env.step(initial_actions)
+            await asyncio.wait_for(result.env.step(initial_actions), timeout=180)
             log_info(f"已发布 {len(initial_actions)} 条初始帖子")
     
     # 记录 round 0 结束
     if action_logger:
         action_logger.log_round_end(0, initial_action_count)
     
+    _, last_rowid = fetch_new_actions_from_db(db_path, 0, agent_names)
+
     # 主模拟循环
     time_config = config.get("time_config", {})
     total_hours = time_config.get("total_simulation_hours", 72)
@@ -1233,7 +1240,7 @@ async def run_twitter_simulation(
             break
         
         simulated_minutes = round_num * minutes_per_round
-        simulated_hour = (simulated_minutes // 60) % 24
+        simulated_hour = (time_config.get("start_hour", 0) + simulated_minutes // 60) % 24
         simulated_day = simulated_minutes // (60 * 24) + 1
         
         active_agents = get_active_agents_for_round(
@@ -1251,7 +1258,7 @@ async def run_twitter_simulation(
             continue
         
         actions = {agent: LLMAction() for _, agent in active_agents}
-        await result.env.step(actions)
+        await asyncio.wait_for(result.env.step(actions), timeout=180)
         
         # 从数据库获取实际执行的动作并记录
         actual_actions, last_rowid = fetch_new_actions_from_db(
@@ -1402,13 +1409,15 @@ async def run_reddit_simulation(
                 pass
         
         if initial_actions:
-            await result.env.step(initial_actions)
+            await asyncio.wait_for(result.env.step(initial_actions), timeout=180)
             log_info(f"已发布 {len(initial_actions)} 条初始帖子")
     
     # 记录 round 0 结束
     if action_logger:
         action_logger.log_round_end(0, initial_action_count)
     
+    _, last_rowid = fetch_new_actions_from_db(db_path, 0, agent_names)
+
     # 主模拟循环
     time_config = config.get("time_config", {})
     total_hours = time_config.get("total_simulation_hours", 72)
@@ -1432,7 +1441,7 @@ async def run_reddit_simulation(
             break
         
         simulated_minutes = round_num * minutes_per_round
-        simulated_hour = (simulated_minutes // 60) % 24
+        simulated_hour = (time_config.get("start_hour", 0) + simulated_minutes // 60) % 24
         simulated_day = simulated_minutes // (60 * 24) + 1
         
         active_agents = get_active_agents_for_round(
@@ -1450,7 +1459,7 @@ async def run_reddit_simulation(
             continue
         
         actions = {agent: LLMAction() for _, agent in active_agents}
-        await result.env.step(actions)
+        await asyncio.wait_for(result.env.step(actions), timeout=180)
         
         # 从数据库获取实际执行的动作并记录
         actual_actions, last_rowid = fetch_new_actions_from_db(

@@ -584,6 +584,7 @@ const handleNewProject = async () => {
     pending.files.forEach(file => {
       formDataObj.append('files', file)
     })
+    formDataObj.append('project_name', pending.projectName)
     formDataObj.append('simulation_requirement', pending.simulationRequirement)
     
     // 调用本体生成 API

@@ -23,6 +23,7 @@ from ..utils.logger import get_logger
 from ..utils.locale import t, get_locale, set_locale
 from ..utils.zep_lifecycle import get_graph_readers, graph_lifecycle_lock
 from ..models.project import ProjectManager
+from ..services.lab_runtime import guarded_start, run_options
 
 logger = get_logger('mirofish.api.simulation')
 
@@ -1499,6 +1500,7 @@ def generate_profiles():
 # ============== 模拟运行控制接口 ==============
 
 @simulation_bp.route('/start', methods=['POST'])
+@guarded_start
 def start_simulation():
     """
     开始运行模拟
@@ -2876,3 +2878,14 @@ def close_simulation_env():
             "error": str(e),
             "traceback": traceback.format_exc()
         }), 500
+
+
+@simulation_bp.route('/<simulation_id>/run-options', methods=['GET'])
+def get_lab_run_options(simulation_id):
+    import re
+    if not re.fullmatch(r'sim_[A-Za-z0-9_-]{4,64}', simulation_id):
+        return jsonify(success=False, error='Invalid simulation ID'), 400
+    try:
+        return jsonify(success=True, data=run_options(os.path.join(SimulationRunner.RUN_STATE_DIR, simulation_id)))
+    except FileNotFoundError:
+        return jsonify(success=False, error='Simulation not found'), 404

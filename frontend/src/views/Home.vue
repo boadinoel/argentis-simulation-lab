@@ -126,6 +126,11 @@
         <!-- 右栏：交互控制台 -->
         <div class="right-panel">
           <div class="console-box">
+            <div class="console-section">
+              <h2>New simulation project</h2>
+              <p>Each new project gets its own documents, ontology, knowledge graph, agents, and results. Upload related reports together. Return to previous projects below.</p>
+              <label>Project name <input v-model="formData.projectName" placeholder="e.g. New market research" maxlength="120" style="width:100%;padding:12px;margin-top:8px"></label>
+            </div>
             <!-- 上传区域 -->
             <div class="console-section">
               <div class="console-header">
@@ -207,6 +212,7 @@
 
       <!-- 历史项目数据库 -->
       <HistoryDatabase />
+      <p style="padding:24px">Argentis Simulation Lab · Based on MiroFish (AGPL-3.0). <a href="https://github.com/boadinoel/argentis-simulation-lab" target="_blank" rel="noopener">Source code and license</a></p>
     </div>
   </div>
 </template>
@@ -221,6 +227,7 @@ const router = useRouter()
 
 // 表单数据
 const formData = ref({
+  projectName: '',
   simulationRequirement: ''
 })
 
@@ -237,7 +244,7 @@ const fileInput = ref(null)
 
 // 计算属性:是否可以提交
 const canSubmit = computed(() => {
-  return formData.value.simulationRequirement.trim() !== '' && files.value.length > 0
+  return formData.value.projectName.trim() !== '' && formData.value.simulationRequirement.trim() !== '' && files.value.length > 0
 })
 
 // 触发文件选择
@@ -300,7 +307,7 @@ const startSimulation = () => {
   
   // 存储待上传的数据
   import('../store/pendingUpload.js').then(({ setPendingUpload }) => {
-    setPendingUpload(files.value, formData.value.simulationRequirement)
+    setPendingUpload(files.value, formData.value.simulationRequirement, formData.value.projectName.trim())
     
     // 立即跳转到Process页面（使用特殊标识表示新建项目）
     router.push({

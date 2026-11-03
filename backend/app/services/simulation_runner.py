@@ -294,6 +294,15 @@ class SimulationRunner:
         # 尝试从文件加载
         state = cls._load_run_state(simulation_id)
         if state:
+            # No worker belongs to this server after a restart. Persisted PIDs
+            # can be recycled, so they are not a safe liveness test.
+            if state.runner_status in {RunnerStatus.STARTING, RunnerStatus.RUNNING, RunnerStatus.PAUSED, RunnerStatus.STOPPING}:
+                state.runner_status = RunnerStatus.FAILED
+                state.error = "Worker interrupted by a service restart. Previous files are preserved; Retry archives this attempt before running again."
+                state.twitter_running = state.reddit_running = False
+                state.completed_at = datetime.now().isoformat()
+                cls._save_run_state(state)
+                cls._sync_simulation_status(simulation_id, RunnerStatus.FAILED, state.error)
             cls._run_states[simulation_id] = state
         return state
     
@@ -464,10 +473,10 @@ class SimulationRunner:
         
         # 确定运行哪个脚本（脚本位于 backend/scripts/ 目录）
         if platform == "twitter":
-            script_name = "run_twitter_simulation.py"
+            script_name = "run_parallel_simulation.py"
             state.twitter_running = True
         elif platform == "reddit":
-            script_name = "run_reddit_simulation.py"
+            script_name = "run_parallel_simulation.py"
             state.reddit_running = True
         else:
             script_name = "run_parallel_simulation.py"
@@ -515,11 +524,14 @@ class SimulationRunner:
             #   simulation.log        - 主进程日志
             
             cmd = [
-                sys.executable,  # Python解释器
+                sys.executable, "-u",  # Unbuffered worker diagnostics
                 script_path,
                 "--config", config_path,  # 使用完整配置文件路径
             ]
             
+            if platform in ("twitter", "reddit"):
+                cmd.append("--" + platform + "-only")
+
             # 如果指定了最大轮数，添加到命令行参数
             if max_rounds is not None and max_rounds > 0:
                 cmd.extend(["--max-rounds", str(max_rounds)])
@@ -651,7 +663,19 @@ class SimulationRunner:
                         reddit_actions_log, reddit_position, state, "reddit"
                     )
                 
-                # 更新状态
+                # Rounds finish while IPC stays alive for agent interviews.
+                # Drain graph writes before publishing terminal success.
+                if cls._check_all_platforms_completed(state) and state.runner_status == RunnerStatus.RUNNING:
+                    if cls._graph_memory_enabled.get(simulation_id, False):
+                        state.runner_status = RunnerStatus.STOPPING
+                        cls._save_run_state(state)
+                        ZepGraphMemoryManager.stop_updater(simulation_id)
+                        cls._graph_memory_enabled.pop(simulation_id, None)
+                    state.runner_status = RunnerStatus.COMPLETED
+                    state.completed_at = datetime.now().isoformat()
+                    cls._sync_simulation_status(simulation_id, RunnerStatus.COMPLETED)
+                if state.runner_status == RunnerStatus.RUNNING and (datetime.now() - datetime.fromisoformat(state.started_at)).total_seconds() > 1800:
+                    raise TimeoutError("Simulation exceeded the 30-minute run limit; previous events are retained.")
                 cls._save_run_state(state)
                 time.sleep(2)
             
@@ -666,6 +690,8 @@ class SimulationRunner:
         except Exception as e:
             logger.error(f"监控线程异常: {simulation_id}, error={str(e)}")
             monitor_error = e
+            if process.poll() is None:
+                cls._terminate_process(process, simulation_id)
         
         finally:
             # Manual stop and natural completion can observe the same process
@@ -892,6 +918,9 @@ class SimulationRunner:
         twitter_log = os.path.join(sim_dir, "twitter", "actions.jsonl")
         reddit_log = os.path.join(sim_dir, "reddit", "actions.jsonl")
         
+        if state.twitter_running or state.reddit_running:
+            return False
+
         # 检查哪些平台被启用（通过文件是否存在判断）
         twitter_enabled = os.path.exists(twitter_log)
         reddit_enabled = os.path.exists(reddit_log)

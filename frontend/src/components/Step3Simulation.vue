@@ -1,5 +1,23 @@
 <template>
   <div class="simulation-panel">
+
+    <section class="lab-run-controls" aria-label="Simulation controls">
+      <strong>{{ isLoading ? 'Loading saved simulation…' : (runStatus.runner_status || 'Ready') }}</strong>
+      <p>Opening or refreshing this page only loads saved results. Start and Retry use paid model requests.</p>
+      <fieldset :disabled="isLoading || isStarting || phase === 1 || phase === 2">
+        <label>Platform <select v-model="runOptions.platform"><option value="reddit">Reddit</option><option value="twitter">Twitter</option><option value="parallel">Both</option></select></label>
+        <label>Maximum rounds <input aria-label="Maximum rounds" type="number" min="1" max="1000" v-model.number="runOptions.max_rounds"></label>
+        <label>Starting hour (scenario time) <input aria-label="Starting hour" type="number" min="0" max="23" v-model.number="runOptions.start_hour"></label>
+        <label><input type="checkbox" v-model="runOptions.enable_graph_memory_update"> Add simulated activity to this project's graph</label>
+      </fieldset>
+      <p v-if="startError" role="alert">{{ startError }}</p>
+      <button v-if="phase === 0" class="action-btn primary" :disabled="isLoading || isStarting || !optionsReady" @click="doStartSimulation">
+        {{ isStarting ? 'Starting…' : (runStatus.runner_status === 'failed' ? 'Retry (archive previous attempt)' : 'Start simulation') }}
+      </button>
+      <button v-if="phase === 1" class="action-btn" :disabled="isStopping" @click="handleStopSimulation">Stop simulation</button>
+      <button class="action-btn" @click="router.push('/')">Projects</button>
+      <button v-if="!optionsReady && !isLoading" class="action-btn" @click="restoreSimulation">Reload status</button>
+    </section>
     <!-- Top Control Bar -->
     <div class="control-bar">
       <div class="status-group">
@@ -296,6 +314,7 @@ import {
   getRunStatusDetail
 } from '../api/simulation'
 import { generateReport } from '../api/report'
+import api from '../api/index'
 
 const { t } = useI18n()
 
@@ -319,6 +338,9 @@ const router = useRouter()
 const isGeneratingReport = ref(false)
 const phase = ref(0) // 0: 未开始, 1: 运行中, 2: 已完成
 const isStarting = ref(false)
+const isLoading = ref(true)
+const optionsReady = ref(false)
+const runOptions = ref({ platform: 'reddit', max_rounds: 10, start_hour: 9, enable_graph_memory_update: false })
 const isStopping = ref(false)
 const startError = ref(null)
 const runStatus = ref({})
@@ -381,59 +403,53 @@ const resetAllState = () => {
 
 // 启动模拟
 const doStartSimulation = async () => {
-  if (!props.simulationId) {
-    addLog(t('log.errorMissingSimId'))
-    return
-  }
-
-  // 先重置所有状态，确保不会受到上一次模拟的影响
-  resetAllState()
-  
+  if (!props.simulationId || isStarting.value || !optionsReady.value || phase.value !== 0) return
   isStarting.value = true
   startError.value = null
-  addLog(t('log.startingDualSim'))
-  emit('update-status', 'processing')
-  
   try {
-    const params = {
+    const res = await startSimulation({
       simulation_id: props.simulationId,
-      platform: 'parallel',
-      force: true,  // 强制重新开始
-      enable_graph_memory_update: true  // 开启动态图谱更新
-    }
-    
-    if (props.maxRounds) {
-      params.max_rounds = props.maxRounds
-      addLog(t('log.setMaxRounds', { rounds: props.maxRounds }))
-    }
-    
-    addLog(t('log.graphMemoryUpdateEnabled'))
-    
-    const res = await startSimulation(params)
-    
-    if (res.success && res.data) {
-      if (res.data.force_restarted) {
-        addLog(t('log.oldSimCleared'))
-      }
-      addLog(t('log.engineStarted'))
-      addLog(`  ├─ PID: ${res.data.process_pid || '-'}`)
-      
-      phase.value = 1
-      runStatus.value = res.data
-      
-      startStatusPolling()
-      startDetailPolling()
-    } else {
-      startError.value = res.error || '启动失败'
-      addLog(t('log.startFailed', { error: res.error || t('common.unknownError') }))
-      emit('update-status', 'error')
-    }
+      ...runOptions.value,
+      force: false,
+      retry: runStatus.value.runner_status === 'failed'
+    })
+    if (!res.success) throw new Error(res.error || 'Start failed')
+    allActions.value = []
+    actionIds.value = new Set()
+    await restoreSimulation()
   } catch (err) {
     startError.value = err.message
-    addLog(t('log.startException', { error: err.message }))
     emit('update-status', 'error')
   } finally {
     isStarting.value = false
+  }
+}
+
+const restoreSimulation = async () => {
+  stopPolling()
+  isLoading.value = true
+  optionsReady.value = false
+  startError.value = null
+  try {
+    const [status, options] = await Promise.all([
+      getRunStatus(props.simulationId),
+      api.get('/api/simulation/' + props.simulationId + '/run-options')
+    ])
+    runOptions.value = options.data
+    if (status.data.runner_status === 'idle' && props.maxRounds) runOptions.value.max_rounds = props.maxRounds
+    runStatus.value = status.data
+    phase.value = ['starting', 'running', 'paused', 'stopping'].includes(status.data.runner_status) ? 1
+      : ['completed', 'stopped'].includes(status.data.runner_status) ? 2 : 0
+    startError.value = status.data.error || null
+    await fetchRunStatusDetail()
+    optionsReady.value = true
+    emit('update-status', phase.value === 1 ? 'processing' : phase.value === 2 ? 'completed' : status.data.runner_status === 'failed' ? 'error' : 'ready')
+    if (phase.value === 1) { startStatusPolling(); startDetailPolling() }
+  } catch (err) {
+    startError.value = 'Cannot load saved state: ' + err.message
+    emit('update-status', 'error')
+  } finally {
+    isLoading.value = false
   }
 }
 
@@ -519,11 +535,13 @@ const fetchRunStatus = async () => {
       // terminal state after the Zep ingestion barrier has completed.
       if (isFailed) {
         addLog(t('log.simFailed') + (data.error ? `: ${data.error}` : ''))
-        phase.value = 2
+        phase.value = 0
+        startError.value = data.error || 'Worker failed'
         stopPolling()
         emit('update-status', 'error')
       } else if (isCompleted) {
         addLog(t('log.simCompleted'))
+        await fetchRunStatusDetail()
         phase.value = 2
         stopPolling()
         emit('update-status', 'completed')
@@ -691,7 +709,7 @@ watch(() => props.systemLogs?.length, () => {
 onMounted(() => {
   addLog(t('log.step3Init'))
   if (props.simulationId) {
-    doStartSimulation()
+    restoreSimulation()
   }
 })
 
@@ -701,6 +719,13 @@ onUnmounted(() => {
 </script>
 
 <style scoped>
+.lab-run-controls { padding: 16px 24px; border-bottom: 1px solid #ddd; font-size: 13px; overflow: auto; flex-shrink: 0; max-height: 42vh; }
+.lab-run-controls fieldset { display: flex; flex-wrap: wrap; gap: 12px; border: 0; padding: 6px 0 12px; }
+.lab-run-controls label { display: flex; align-items: center; gap: 6px; }
+.lab-run-controls input[type=number] { width: 65px; }
+.lab-run-controls button { margin-right: 8px; }
+.lab-run-controls [role=alert] { color: #a32121; }
+
 .simulation-panel {
   height: 100%;
   display: flex;
