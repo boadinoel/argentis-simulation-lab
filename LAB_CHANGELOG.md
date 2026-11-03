@@ -34,3 +34,10 @@ barrier tests exercise the underlying upstream handler separately from the lab g
 - Preparation checks require only enabled-platform profiles, preventing unnecessary
   regeneration and allowing single-platform retries. Simulation creation rejects a
   graph ID belonging to a different project.
+
+- Interview availability also checks the owned worker, so a stale alive file after
+  a container restart cannot advertise a functioning interview session. Saved
+  reports, action timelines, and interview transcripts remain on the volume.
+
+- Phone browser QA found clipped report controls and split-column events; mobile
+  now uses full-width timeline cards and shows only the selected platforms.

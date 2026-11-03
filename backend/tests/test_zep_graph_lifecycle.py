@@ -397,7 +397,7 @@ def test_graph_reset_and_memory_start_cannot_cross_between_delete_and_clear(
                 "enable_graph_memory_update": True,
             },
         ):
-            results["start"] = _json_result(simulation_api.start_simulation())
+            results["start"] = _json_result(simulation_api.start_simulation.__wrapped__())
 
     reset_thread = threading.Thread(target=reset)
     reset_thread.start()

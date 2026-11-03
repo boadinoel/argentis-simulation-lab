@@ -1680,6 +1680,9 @@ class SimulationRunner:
         if not os.path.exists(sim_dir):
             return False
 
+        process = cls._processes.get(simulation_id)
+        if process is None or process.poll() is not None:
+            return False
         ipc_client = SimulationIPCClient(sim_dir)
         return ipc_client.check_env_alive()
 
@@ -1704,6 +1707,9 @@ class SimulationRunner:
             "timestamp": None
         }
         
+        process = cls._processes.get(simulation_id)
+        if process is None or process.poll() is not None:
+            return default_status
         if not os.path.exists(status_file):
             return default_status
         

@@ -22,7 +22,7 @@
     <div class="control-bar">
       <div class="status-group">
         <!-- Twitter 平台进度 -->
-        <div class="platform-status twitter" :class="{ active: runStatus.twitter_running, completed: runStatus.twitter_completed }">
+        <div v-if="runOptions.platform !== 'reddit'" class="platform-status twitter" :class="{ active: runStatus.twitter_running, completed: runStatus.twitter_completed }">
           <div class="platform-header">
             <svg class="platform-icon" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2">
               <circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
@@ -63,7 +63,7 @@
         </div>
         
         <!-- Reddit 平台进度 -->
-        <div class="platform-status reddit" :class="{ active: runStatus.reddit_running, completed: runStatus.reddit_completed }">
+        <div v-if="runOptions.platform !== 'twitter'" class="platform-status reddit" :class="{ active: runStatus.reddit_running, completed: runStatus.reddit_completed }">
           <div class="platform-header">
             <svg class="platform-icon" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2">
               <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path>
@@ -1289,5 +1289,16 @@ onUnmounted(() => {
   border-radius: 50%;
   animation: spin 0.8s linear infinite;
   margin-right: 6px;
+}
+@media (max-width: 800px) {
+  .control-bar { flex-direction: column; align-items: stretch; gap: 10px; padding: 10px 16px; }
+  .status-group { justify-content: space-between; }
+  .action-controls, .action-controls button { width: 100%; }
+  .timeline-axis, .timeline-marker { left: 18px; }
+  .timeline-item.twitter, .timeline-item.reddit { padding: 0 12px 0 32px; justify-content: flex-start; box-sizing: border-box; }
+  .timeline-item.twitter .timeline-card, .timeline-item.reddit .timeline-card { width: 100%; margin: 0; box-sizing: border-box; }
+  .timeline-card { padding: 12px; }
+  .lab-run-controls { max-height: 36vh; padding: 12px 16px; }
+  .log-panel { max-height: 110px; }
 }
 </style>

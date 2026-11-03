@@ -102,3 +102,10 @@ def test_foreign_graph_is_rejected(monkeypatch):
         response, status = api.create_simulation()
         assert status == 400
         assert 'selected project' in response.get_json()['error']
+
+
+def test_stale_interview_status_is_not_alive(lab):
+    _, sid, root, _ = lab
+    (root / 'env_status.json').write_text('{"status":"alive","reddit_available":true}')
+    assert not SimulationRunner.check_env_alive(sid)
+    assert SimulationRunner.get_env_status_detail(sid)['status'] == 'stopped'
