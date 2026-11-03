@@ -14,7 +14,7 @@ from app.models.task import TaskStatus
 def _project(status, graph_id="graph-1"):
     now = datetime.now().isoformat()
     return Project(
-        project_id="proj-1",
+        project_id="proj_test",
         name="Project",
         status=status,
         created_at=now,
@@ -60,8 +60,8 @@ def test_project_reset_deletes_the_cloud_graph_before_clearing_reference(monkeyp
     )
 
     app = Flask(__name__)
-    with app.test_request_context("/api/graph/project/proj-1/reset", method="POST"):
-        body, status = _json_result(graph_api.reset_project("proj-1"))
+    with app.test_request_context("/api/graph/project/proj_test/reset", method="POST"):
+        body, status = _json_result(graph_api.reset_project("proj_test"))
 
     assert status == 200
     assert body["success"] is True
@@ -85,8 +85,8 @@ def test_project_reset_refuses_a_graph_with_an_active_simulation(monkeypatch):
     )
 
     app = Flask(__name__)
-    with app.test_request_context("/api/graph/project/proj-1/reset", method="POST"):
-        body, status = _json_result(graph_api.reset_project("proj-1"))
+    with app.test_request_context("/api/graph/project/proj_test/reset", method="POST"):
+        body, status = _json_result(graph_api.reset_project("proj_test"))
 
     assert status == 409
     assert "sim-active" in body["error"]
@@ -136,7 +136,7 @@ def test_repeated_build_request_reuses_the_existing_task(monkeypatch):
     with app.test_request_context(
         "/api/graph/build",
         method="POST",
-        json={"project_id": "proj-1", "force": True},
+        json={"project_id": "proj_test", "force": True},
     ):
         body, status = _json_result(graph_api.build_graph())
 
@@ -173,7 +173,7 @@ def test_stale_build_after_restart_is_recoverable_instead_of_reused(monkeypatch)
     with app.test_request_context(
         "/api/graph/build",
         method="POST",
-        json={"project_id": "proj-1"},
+        json={"project_id": "proj_test"},
     ):
         body, status = _json_result(graph_api.build_graph())
 
@@ -233,7 +233,7 @@ def test_stale_build_resumes_a_persisted_processing_batch(monkeypatch):
     with app.test_request_context(
         "/api/graph/build",
         method="POST",
-        json={"project_id": "proj-1"},
+        json={"project_id": "proj_test"},
     ):
         body, status = _json_result(graph_api.build_graph())
 
@@ -272,16 +272,16 @@ def test_project_delete_removes_cloud_graph_before_local_files(monkeypatch):
 
     app = Flask(__name__)
     with app.test_request_context(
-        "/api/graph/project/proj-1",
+        "/api/graph/project/proj_test",
         method="DELETE",
     ):
-        body, status = _json_result(graph_api.delete_project("proj-1"))
+        body, status = _json_result(graph_api.delete_project("proj_test"))
 
     assert status == 200
     assert body["success"] is True
     assert events == [
         ("cloud-delete", "graph-1"),
-        ("local-delete", "proj-1"),
+        ("local-delete", "proj_test"),
     ]
 
 
@@ -298,7 +298,7 @@ def test_completed_build_request_is_idempotent_without_force(monkeypatch):
     with app.test_request_context(
         "/api/graph/build",
         method="POST",
-        json={"project_id": "proj-1"},
+        json={"project_id": "proj_test"},
     ):
         body, status = _json_result(graph_api.build_graph())
 
@@ -320,7 +320,7 @@ def test_force_must_be_a_json_boolean(monkeypatch):
     with app.test_request_context(
         "/api/graph/build",
         method="POST",
-        json={"project_id": "proj-1", "force": "false"},
+        json={"project_id": "proj_test", "force": "false"},
     ):
         body, status = _json_result(graph_api.build_graph())
 
@@ -384,9 +384,9 @@ def test_graph_reset_and_memory_start_cannot_cross_between_delete_and_clear(
 
     def reset():
         with app.test_request_context(
-            "/api/graph/project/proj-1/reset", method="POST"
+            "/api/graph/project/proj_test/reset", method="POST"
         ):
-            results["reset"] = _json_result(graph_api.reset_project("proj-1"))
+            results["reset"] = _json_result(graph_api.reset_project("proj_test"))
 
     def start():
         with app.test_request_context(

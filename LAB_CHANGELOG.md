@@ -100,3 +100,6 @@ Blast radius: checked uploads, duplicate submissions, interrupted batch recovery
 Zep graph lifecycle consumers, project text/files, scenario creation and objective,
 preparation, run start, report generation/chat, archived revisions and mobile routing.
 No production services or customer research are committed to this repository.
+
+- Lifecycle race fixtures now use valid project IDs while retaining the same
+  concurrent reset/start assertions; existing graph ownership checks stay strict.
