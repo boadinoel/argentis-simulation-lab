@@ -709,6 +709,8 @@ def fetch_new_actions_from_db(
             simplified_args = {}
             if 'content' in action_args:
                 simplified_args['content'] = action_args['content']
+            if action == 'interview' and 'response' in action_args:
+                simplified_args['content'] = action_args['response']
             if 'post_id' in action_args:
                 simplified_args['post_id'] = action_args['post_id']
             if 'comment_id' in action_args:
@@ -1038,7 +1040,7 @@ def create_model(config: Dict[str, Any], use_boost: bool = False):
         url=llm_base_url or None,
         model_config_dict={"max_tokens": 1024},
         timeout=60,
-        max_retries=2,
+        max_retries=0 if "visual_study" in config else 2,
     )
 
 
@@ -1246,6 +1248,8 @@ async def run_twitter_simulation(
         active_agents = get_active_agents_for_round(
             result.env, config, simulated_hour, round_num
         )
+        if 'visual_study' in config:
+            active_agents = list(result.agent_graph.get_agents())
         
         # 无论是否有活跃agent，都记录round开始
         if action_logger:
@@ -1257,7 +1261,10 @@ async def run_twitter_simulation(
                 action_logger.log_round_end(round_num + 1, 0)
             continue
         
-        if config.get('strategic_rounds'):
+        if 'visual_study' in config:
+            from visual_study import run_round
+            await run_round(result.env, result.agent_graph, config, round_num, simulation_dir, 'twitter')
+        elif config.get('strategic_rounds'):
             from strategic_workshop import run_round
             await run_round(result.env, result.agent_graph, config, round_num, simulation_dir, 'twitter')
         else:
@@ -1451,6 +1458,8 @@ async def run_reddit_simulation(
         active_agents = get_active_agents_for_round(
             result.env, config, simulated_hour, round_num
         )
+        if 'visual_study' in config:
+            active_agents = list(result.agent_graph.get_agents())
         
         # 无论是否有活跃agent，都记录round开始
         if action_logger:
@@ -1462,7 +1471,10 @@ async def run_reddit_simulation(
                 action_logger.log_round_end(round_num + 1, 0)
             continue
         
-        if config.get('strategic_rounds'):
+        if 'visual_study' in config:
+            from visual_study import run_round
+            await run_round(result.env, result.agent_graph, config, round_num, simulation_dir, 'reddit')
+        elif config.get('strategic_rounds'):
             from strategic_workshop import run_round
             await run_round(result.env, result.agent_graph, config, round_num, simulation_dir, 'reddit')
         else:

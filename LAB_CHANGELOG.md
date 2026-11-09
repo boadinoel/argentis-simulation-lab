@@ -1,5 +1,23 @@
 # Argentis Simulation Lab
 
+## 2026-11-09 — Native image-conditioned studies
+
+- Add an opt-in `visual_study` worker mode on both platforms. Native OASIS
+  interviews receive real image content parts, current-stage instructions and
+  only their own earlier answers. No feed posts or graph retrieval occur.
+- Private relative image paths are validated, bounded and SHA-256 recorded.
+  Image bytes stay outside the repository; textual interview history retains
+  image receipts instead of repeated base64 payloads.
+- Each stage includes all prepared agents, with five concurrent interviews and
+  provider retries disabled for this mode. Normal social/workshop runs retain
+  their existing scheduling and retry behavior.
+- Native interview replies now appear as content on the action timeline.
+- Configuration guide: `backend/docs/VISUAL_STUDIES.md`.
+
+Blast radius: both native platforms, model construction, activity scheduling,
+interview trace/history, timeline payloads, private file boundaries, and stage
+isolation checked. Existing social and strategic-workshop paths remain intact.
+
 ## 2026-11-03 — Explicit runs, instrumented workers, isolated projects
 
 - Page navigation loads existing status and events. Start/Retry are explicit;
