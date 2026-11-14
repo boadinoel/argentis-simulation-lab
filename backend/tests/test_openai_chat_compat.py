@@ -26,6 +26,13 @@ def client_for(recorder):
     return SimpleNamespace(chat=SimpleNamespace(completions=recorder))
 
 
+def test_profile_and_config_calls_cannot_bypass_legacy_guard():
+    recorder = CompletionRecorder()
+    with pytest.raises(ValueError, match="Legacy"):
+        create_chat_completion(client_for(recorder), model="gpt-4.1-mini", messages=[])
+    assert recorder.calls == []
+
+
 def test_gpt5_uses_completion_token_limit_without_temperature():
     recorder = CompletionRecorder()
     messages = [{"role": "user", "content": "hello"}]

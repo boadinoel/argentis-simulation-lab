@@ -164,3 +164,7 @@ logs checked. Logs remain preserved; persisted reviewed content is authoritative
 
 Blast radius: interactive/batch/report interviews, section persistence, completion
 and explicit Chinese locale checked. No production services or original research changed.
+# 2026-11-13 — Model guard coverage follow-up
+
+- Enforce the legacy-model guard at the shared completion boundary as well as the general client and worker factories. Profile/config generators use this boundary directly and must not bypass the Lab policy with an explicit override.
+- Blast radius: inspected all backend provider-call sites; profile/config generation now shares the guard. Explicit non-legacy provider behavior, stored history and production Argentis services are unaffected. Regression test verifies rejection before any provider request.

@@ -8,7 +8,7 @@ gracefully adapting request parameters for GPT-5 family models.
 from __future__ import annotations
 
 from typing import Any, Dict, List, Optional
-from modern_openai import ResponsesBridge, is_modern
+from modern_openai import ResponsesBridge, is_modern, validate_lab_model
 
 
 def is_gpt5_family(model: Optional[str]) -> bool:
@@ -36,6 +36,7 @@ def create_chat_completion(
     - Preserve the legacy request shape for every non-GPT-5 model/provider.
     - Propagate provider errors unchanged instead of guessing from message text.
     """
+    validate_lab_model(model)
     if is_modern(model):
         bridge = ResponsesBridge()
         request = bridge.request(model, messages, {'max_tokens':max_tokens or 8192}, response_format=response_format)
