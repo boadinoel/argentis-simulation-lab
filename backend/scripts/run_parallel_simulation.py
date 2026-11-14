@@ -1019,7 +1019,8 @@ def create_model(config: Dict[str, Any], use_boost: bool = False):
     
     # 如果 .env 中没有模型名，则使用 config 作为备用
     if not llm_model:
-        llm_model = config.get("llm_model", "gpt-4o-mini")
+        from modern_openai import DEFAULT_LAB_MODEL
+        llm_model = config.get("llm_model", DEFAULT_LAB_MODEL)
     
     # 设置 camel-ai 所需的环境变量
     if llm_api_key:
@@ -1034,13 +1035,18 @@ def create_model(config: Dict[str, Any], use_boost: bool = False):
     print(f"{config_label} model={llm_model}, base_url={llm_base_url[:40] if llm_base_url else '默认'}...")
     
     from lab_model import LabOpenAIModel
+    from modern_openai import validate_lab_model, is_modern
+    validate_lab_model(llm_model)
+    from pathlib import Path
+    receipt_path = Path(__file__).resolve().parents[1] / 'uploads' / 'simulations' / config['simulation_id'] / 'model_receipts.jsonl'
     return LabOpenAIModel(
         model_type=llm_model,
         api_key=llm_api_key or None,
         url=llm_base_url or None,
-        model_config_dict={"max_tokens": 1024},
-        timeout=60,
-        max_retries=0 if "visual_study" in config else 2,
+        model_config_dict={"max_tokens": 8192 if is_modern(llm_model) else 1024},
+        receipt_path=receipt_path,
+        timeout=150 if is_modern(llm_model) else 60,
+        max_retries=0,
     )
 
 

@@ -447,7 +447,8 @@ class RedditSimulationRunner:
         
         # 如果 .env 中没有，则使用 config 作为备用
         if not llm_model:
-            llm_model = self.config.get("llm_model", "gpt-4o-mini")
+            from modern_openai import DEFAULT_LAB_MODEL
+            llm_model = self.config.get("llm_model", DEFAULT_LAB_MODEL)
         
         # 设置 camel-ai 所需的环境变量
         if llm_api_key:
@@ -461,9 +462,14 @@ class RedditSimulationRunner:
         
         print(f"LLM配置: model={llm_model}, base_url={llm_base_url[:40] if llm_base_url else '默认'}...")
         
-        return ModelFactory.create(
-            model_platform=ModelPlatformType.OPENAI,
+        from lab_model import LabOpenAIModel
+        from modern_openai import validate_lab_model, is_modern
+        validate_lab_model(llm_model)
+        return LabOpenAIModel(
             model_type=llm_model,
+            model_config_dict={'max_tokens':8192 if is_modern(llm_model) else 1024},
+            timeout=150,
+            max_retries=0,
         )
     
     def _get_active_agents_for_round(

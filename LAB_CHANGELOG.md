@@ -1,5 +1,25 @@
 # Argentis Simulation Lab
 
+## 2026-11-13 — Current model policy and GPT-6 runtime
+
+- Default new research to GPT-6 Astra; reject GPT-4/3.5 selections rather than
+  silently downgrading. Preserve historical outputs and their original labels.
+- Bridge current worker and backend requests through Responses with medium
+  reasoning, text/images, tool-call IDs, encrypted reasoning continuation,
+  usage conversion, explicit incomplete-response failures and no API storage.
+- Record per-run provider model/usage receipts without prompts or credentials.
+  Modern workers receive an 8192-token reasoning-plus-answer cap and a 150-second
+  request timeout, with automatic paid retries disabled.
+- Remove the workshop's contradictory request for a named peer rebuttal before
+  any prior response exists; call previous synthetic opinions opinions, not facts.
+- Maintain `MODEL_POLICY.md` so a future study rechecks model currency instead
+  of inheriting a dated inexpensive default indefinitely.
+
+Blast radius: checked graph ontology/profile/config/report clients, normal and
+visual workers, both platforms, old script entry points, tool continuation,
+image input, model fallbacks, output/memory budgets, source templates and receipt
+privacy. No changes to Argentis production, gateway auth, storage or old runs.
+
 ## 2026-11-09 — Native image-conditioned studies
 
 - Add an opt-in `visual_study` worker mode on both platforms. Native OASIS

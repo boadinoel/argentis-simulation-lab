@@ -1,6 +1,7 @@
 """\n配置管理\n统一从项目根目录的 .env 文件加载配置\n"""
 
 import os
+from modern_openai import DEFAULT_LAB_MODEL
 from dotenv import load_dotenv
 
 # 加载项目根目录的 .env 文件
@@ -27,7 +28,7 @@ class Config:
     # LLM配置（统一使用OpenAI格式）
     LLM_API_KEY = os.environ.get('LLM_API_KEY')
     LLM_BASE_URL = os.environ.get('LLM_BASE_URL', 'https://api.openai.com/v1')
-    LLM_MODEL_NAME = os.environ.get('LLM_MODEL_NAME', 'gpt-4o-mini')
+    LLM_MODEL_NAME = os.environ.get('LLM_MODEL_NAME', DEFAULT_LAB_MODEL)
     
     # Zep配置
     ZEP_API_KEY = os.environ.get('ZEP_API_KEY')
