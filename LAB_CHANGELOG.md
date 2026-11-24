@@ -168,3 +168,8 @@ and explicit Chinese locale checked. No production services or original research
 
 - Enforce the legacy-model guard at the shared completion boundary as well as the general client and worker factories. Profile/config generators use this boundary directly and must not bypass the Lab policy with an explicit override.
 - Blast radius: inspected all backend provider-call sites; profile/config generation now shares the guard. Explicit non-legacy provider behavior, stored history and production Argentis services are unaffected. Regression test verifies rejection before any provider request.
+# 2026-11-23 — Current model for new research
+
+- Select GPT-6.2 Astra after official documentation resolution and an actual account/Responses-bridge probe. Preserve medium reasoning, no automatic downgrade, bounded output and provider receipts.
+- Align the central fallback and environment example. The existing GPT-6 adapter already handles the selected model; no endpoint or prompt-history mutation is needed.
+- Blast radius: checked backend config and all worker fallback consumers; explicit configuration and all old study labels/history remain intact. No production Argentis service or app changes.

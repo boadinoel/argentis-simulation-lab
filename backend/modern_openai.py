@@ -9,7 +9,7 @@ import threading
 from pathlib import Path
 from openai.types.chat import ChatCompletion
 
-DEFAULT_LAB_MODEL = 'gpt-6-astra'
+DEFAULT_LAB_MODEL = 'gpt-6.2-astra'
 
 
 def is_modern(model):
